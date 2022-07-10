@@ -97,9 +97,9 @@ namespace rEFInd
             switch (Arch)
             {
                 case "AMD64": return new string[] { "x64", "Architecture : AMD Architecture64 - rEFInd_x64" };
-                case "IA64": return new string[] { "x64" + "Architecture : Intel Architecture64 - rEFInd_x64" };
-                case "ARM64": return new string[] { "aa64" + "Architecture : ARM64 - rEFInd_aa64" };
-                case "x86": return new string[] { "ia32" + "Architecture : x32 or x86 - rEFInd_ia32" };
+                case "IA64": return new string[] { "x64", "Architecture : Intel Architecture64 - rEFInd_x64" };
+                case "ARM64": return new string[] { "aa64", "Architecture : ARM64 - rEFInd_aa64" };
+                case "x86": return new string[] { "ia32", "Architecture : x32 or x86 - rEFInd_ia32" };
             }
             return null;
         }
