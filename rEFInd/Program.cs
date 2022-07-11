@@ -9,13 +9,13 @@ namespace rEFInd
     class Options
     {
         [Option('i', "Install", HelpText = "Set install Mode\nfor example : \n\"refind -i computer\" - rEFInd should be installed on current Computer, \n\"refind --install E:\"- rEFInd should be installed on Flash Drive E:\\")]
-        public string Install { get; set; }
+        public string? Install { get; set; }
 
         [Option('t', "Theme", HelpText = "Set path to your theme folder (only with -i parametr)\nfor example : \n\"refind -install Comp -t C:\\Theme\" - rEFInd should be installed on current Computer with theme in folder C:\\\"Theme\", \n\"refind -i E:\\ -t Theme\" - rEFInd should be installed on Flash Drive E:\\ with theme with theme in folder \"Theme\" near program")]
-        public string Theme { get; set; }
+        public string? Theme { get; set; }
 
         [Option('f', "Format", HelpText = "If drive has File System not FAT32, parametr allow to format him\nfor example : \n\"refind --install E:\\ -f\"")]
-        public bool format { get; set; }
+        public bool Format { get; set; }
 
         [Option('r', "Remove", HelpText = "Remove rEFInd from current Computer\nfor example : \n\"refind -r\"")]
         public bool Delete { get; set; }
@@ -29,12 +29,28 @@ namespace rEFInd
 
     class Automenu
     {
+        public const int ERROR_INVALID_FUNCTION = 1;
+
+        [DllImport("kernel32.dll",
+           EntryPoint = "GetFirmwareEnvironmentVariableW",
+           SetLastError = true,
+           CharSet = CharSet.Unicode,
+           ExactSpelling = true,
+          CallingConvention = CallingConvention.StdCall)]
+        public static extern int GetFirmwareType(string lpName, string lpGUID, IntPtr pBuffer, uint size);
+
         static void Main(string[] args)
         {
-            bool BootMode = IsWindowsUEFI();
-            if (BootMode = false)
+            GetFirmwareType("", "{00000000-0000-0000-0000-000000000000}", IntPtr.Zero, 0);
+            if (Marshal.GetLastWin32Error() == ERROR_INVALID_FUNCTION)
             {
                 Console.WriteLine("Your mainboard doesn't support UEFI and/or Windows is installed in legacy BIOS mode\nCannot install rEFInd !");
+                Environment.Exit(1);
+            }
+
+            if (args.Length == 0)
+            {
+                Console.WriteLine("No arguments, try \"refind --help\"");
                 Environment.Exit(1);
             }
 
@@ -42,135 +58,76 @@ namespace rEFInd
             String Temp = Path.GetTempPath();
             String rEFIndZip = @$"{Temp}\rEFInd.zip";
             String rEFIndData = @$"{Temp}\rEFInd";
-
-            if (args.Length == 0)
-            {
-                Console.WriteLine("No valid arguments, try \"refind --help\"");
-                Environment.Exit(1);
-            }
+            Clear(true);
 
             //Class's
-            Install I = new Install();
-            Config G = new Config();
+            Install Install = new();
+            Config Config = new();
 
-            //Подготовка
-            if (File.Exists(rEFIndZip))
-            {
-                File.Delete(rEFIndZip);
-            }
-
-            if (Directory.Exists(rEFIndData))
-            {
-                Directory.Delete(rEFIndData, true);
-            }
-
-            Directory.CreateDirectory(rEFIndData);
-
+            //Создание Ресурса
             var myAssembly = Assembly.GetExecutingAssembly();
             string resourceName = "rEFInd.zip";
             string fullResourceName = $"{myAssembly.GetName().Name}.{resourceName.Replace('\\', '.')}";
-
             bool isExistsResourceName = myAssembly.GetManifestResourceNames()
                 .Contains(fullResourceName);
 
             if (isExistsResourceName)
             {
-                using (Stream wstream = File.Create($@"{Temp}\rEFInd.zip"))
+                using (Stream wstream = File.Create(rEFIndZip))
                 using (Stream rstream = myAssembly.GetManifestResourceStream(fullResourceName))
                     rstream.CopyTo(wstream);
+
+                if (File.Exists(rEFIndZip))
+                    ZipFile.ExtractToDirectory(rEFIndZip, rEFIndData, true);
             }
 
+            //Начало выполнения
             Parser.Default.ParseArguments<Options>(args)
                    .WithParsed<Options>(o =>
                    {
+                       if (o.Delete)
+                           Remove();
+
                        if (!string.IsNullOrWhiteSpace(o.Install))
                        {
                            if (o.Install.Equals("comp", StringComparison.InvariantCultureIgnoreCase) || o.Install.Equals("computer", StringComparison.InvariantCultureIgnoreCase))
                            {
-                               Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Install on Computer");
+                               Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Install on Computer\n");
+                               Console.Write("Preparation for installation... ");
                                if (File.Exists($@"{Temp}\rEFInd.zip"))
                                {
-                                   ZipFile.ExtractToDirectory(rEFIndZip, rEFIndData);
-                                   Console.WriteLine("\nPreparation for installation... OK");
+                                   Console.WriteLine("OK");
+                                   String ESP = MountESP();
+                                   rEFInd.Install.Computer(ESP, o.Theme);
+                                   rEFInd.Config.Computer(ESP, o.Theme);
                                }
                                else
                                {
-                                   Console.WriteLine("\nPreparation for installation... !ERROR!");
-                                   ClearComp(null);
+                                   Console.WriteLine("!ERROR!");
+                                   Automenu.Clear();
                                    Environment.Exit(1);
-                               }
-
-                               String ESP = MountESP();
-                               I.InstallComputer(ESP);
-                               G.ConfigComputer(ESP, o.Theme);
-
-                               if (!string.IsNullOrWhiteSpace(o.Theme))
-                               {
-                                   if (File.Exists($"{o.Theme}\\theme.conf"))
-                                   {
-                                       var b = Process.Start("cmd.exe", "/c" + $@"xcopy {o.Theme} {ESP}EFI\rEFInd\Theme /I /E /C /Q /Y > nul");
-                                       b.WaitForExit();
-                                       int bExitCode = b.ExitCode;
-
-                                       if (b.ExitCode > 0)
-                                       {
-                                           Console.WriteLine("Theme install... !ERROR!");
-                                           ClearComp(ESP);
-                                           Environment.Exit(1);
-                                       }
-                                       else
-                                       {
-                                           Console.WriteLine("Theme install... OK");
-                                       }
-                                   }
                                }
                            }
                            else
                            {
-                               if (Directory.Exists(o.Install))
+                               if (Directory.Exists(o.Install) || Directory.Exists($@"{o.Install}\") || Directory.Exists($@"{o.Install}:\"))
                                {
-                                   Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Install on Flash Drive {0}", o.Install);
+                                   Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Install on Flash Drive {0}\n", o.Install);
+                                   Console.Write("Preparation for installation... ");
 
                                    if (File.Exists($@"{Temp}\rEFInd.zip"))
                                    {
-                                       ZipFile.ExtractToDirectory(rEFIndZip, rEFIndData);
-                                       Console.WriteLine("\nPreparation for installation... OK");
+                                       Console.WriteLine("OK");
+                                       DriveInfo[] allDrives = DriveInfo.GetDrives();
+                                       foreach (DriveInfo d in allDrives)
+                                           if (d.Name == o.Install || d.Name == $@"{o.Install}\" || d.Name == $@"{o.Install}:\")
+                                               rEFInd.Install.USB(d.Name, d.DriveFormat, o.Format, o.Theme);
                                    }
                                    else
                                    {
-                                       Console.WriteLine("\nPreparation for installation... !ERROR!");
-                                       ClearUSB(null);
+                                       Console.WriteLine("!ERROR!");
+                                       Clear();
                                        Environment.Exit(1);
-                                   }
-
-                                   string DriveFS = null;
-                                   string Drive = null;
-                                   DriveInfo[] allDrives = DriveInfo.GetDrives();
-                                   foreach (DriveInfo d in allDrives)
-                                   {
-                                       if (d.Name == o.Install)
-                                           I.InstallUSB(d.Name, d.DriveFormat, o.format);
-
-                                       if (!string.IsNullOrWhiteSpace(o.Theme))
-                                       {
-                                           if (File.Exists($"{o.Theme}\\theme.conf"))
-                                           {
-                                               var b = Process.Start("cmd.exe", "/c" + $@"xcopy {o.Theme} {d.Name}EFI\Boot\Theme /I /E /C /Q /Y > nul");
-                                               b.WaitForExit();
-                                               int bExitCode = b.ExitCode;
-
-                                               if (b.ExitCode > 0)
-                                               {
-                                                   Console.WriteLine("Theme install... !ERROR!");
-                                                   ClearUSB(Drive);
-                                                   Environment.Exit(1);
-                                               }
-                                               else
-                                               {
-                                                   Console.WriteLine("Theme install... OK");
-                                               }
-                                           }
-                                       }
                                    }
                                }
                                else
@@ -182,9 +139,6 @@ namespace rEFInd
                            }
                        }
 
-                       if (o.Delete)
-                           rEFIndRemove();
-
                        if (o.Config)
                            OpenConfig();
 
@@ -192,82 +146,27 @@ namespace rEFInd
                            ScanDir();
 
                    });
+
             Environment.Exit(0);
         }
 
-        public static void ClearComp(String ESP)
+        public static void Clear(bool CreateDirectory = false)
         {
             String Temp = Path.GetTempPath();
-            String rEFIndZip = @$"{Temp}\rEFInd.zip";
-            String rEFIndData = @$"{Temp}\rEFInd";
-            String rEFIndESP = @$"{ESP}EFI\rEFInd";
 
-            if (File.Exists(rEFIndZip))
-            {
-                File.Delete(rEFIndZip);
-            }
+            if (File.Exists(@$"{Temp}\rEFInd.zip"))
+                File.Delete(@$"{Temp}\rEFInd.zip");
 
-            if (Directory.Exists(rEFIndData))
-            {
-                Directory.Delete(rEFIndData, true);
-            }
+            if (Directory.Exists(@$"{Temp}\rEFInd"))
+                Directory.Delete(@$"{Temp}\rEFInd", true);
 
-            if (Directory.Exists(rEFIndESP))
-            {
-                Directory.Delete(rEFIndESP, true);
-            }
+            if (CreateDirectory == true)
+                Directory.CreateDirectory(@$"{Temp}\rEFInd");
         }
 
-        public static void ClearUSB(String Drive)
+        public static string MountESP()
         {
-            String Temp = Path.GetTempPath();
-            String rEFIndZip = @$"{Temp}\rEFInd.zip";
-            String rEFIndData = @$"{Temp}\rEFInd";
-            String rEFIndUSB = @$"{Drive}EFI\Boot";
-
-            if (File.Exists(rEFIndZip))
-            {
-                File.Delete(rEFIndZip);
-            }
-
-            if (Directory.Exists(rEFIndData))
-            {
-                Directory.Delete(rEFIndData, true);
-            }
-        }
-
-        public const int ERROR_INVALID_FUNCTION = 1;
-
-        [DllImport("kernel32.dll",
-           EntryPoint = "GetFirmwareEnvironmentVariableW",
-           SetLastError = true,
-           CharSet = CharSet.Unicode,
-           ExactSpelling = true,
-          CallingConvention = CallingConvention.StdCall)]
-        public static extern int GetFirmwareType(string lpName, string lpGUID, IntPtr pBuffer, uint size);
-
-        public static bool IsWindowsUEFI()
-        {
-            // Call the function with a dummy variable name and a dummy variable namespace (function will fail because these don't exist.)
-            GetFirmwareType("", "{00000000-0000-0000-0000-000000000000}", IntPtr.Zero, 0);
-
-            if (Marshal.GetLastWin32Error() == ERROR_INVALID_FUNCTION)
-            {
-                // Calling the function threw an ERROR_INVALID_FUNCTION win32 error, which gets thrown if either
-                // - The mainboard doesn't support UEFI and/or
-                // - Windows is installed in legacy BIOS mode
-                return false;
-            }
-            else
-            {
-                // If the system supports UEFI and Windows is installed in UEFI mode it doesn't throw the above error, but a more specific UEFI error
-                return true;
-            }
-        }
-
-        public static String MountESP()
-        {
-            //Подключение ESP раздела
+            Console.Write($"Mounting ESP... ");
             string ESP = null;
             DriveInfo[] allDrives = DriveInfo.GetDrives();
             foreach (DriveInfo d in allDrives)
@@ -276,23 +175,23 @@ namespace rEFInd
 
             if (Directory.Exists(ESP))
             {
-                Console.WriteLine($"Mounting ESP... Already in {ESP}");
+                Console.WriteLine($"Already in {ESP}");
+                return ESP;
             }
             else
             {
-                var m = Process.Start("cmd.exe", "/c " + "MountVol S: /s");
-                m.WaitForExit();
-                int mExitCode = m.ExitCode;
+                var MountVol = Process.Start("cmd.exe", "/c " + "MountVol S: /s");
+                MountVol.WaitForExit();
 
-                if (m.ExitCode > 0)
+                if (MountVol.ExitCode > 0)
                 {
-                    Console.WriteLine("Mounting ESP Volume... !ERROR!");
-                    ClearComp(null);
+                    Console.WriteLine("!ERROR!");
+                    Automenu.Clear();
                     Environment.Exit(1);
                 }
                 else
                 {
-                    Console.WriteLine("Mounting ESP Volume... OK");
+                    Console.WriteLine("OK");
                     return @"S:\";
                 }
             }
@@ -302,86 +201,60 @@ namespace rEFInd
 
         public static void OpenConfig()
         {
-            Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Open rEFInd Config");
-            Console.WriteLine();
-            String ESP = MountESP();
-            var b = Process.Start("notepad.exe", $@"{ESP}EFI\rEFInd\refind.conf");
-            b.WaitForExit();
-            int bExitCode = b.ExitCode;
+            Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Open rEFInd Config\n");
+            var Config = Process.Start("notepad.exe", MountESP() + $@"EFI\rEFInd\refind.conf");
+            Console.Write("Opening config... ");
+            Config.WaitForExit();
 
-            if (b.ExitCode > 0)
+            if (Config.ExitCode > 0)
             {
-                Console.WriteLine("Opening config... !ERROR!");
+                Console.WriteLine("!ERROR!");
                 Environment.Exit(1);
             }
             else
             {
-                Console.WriteLine("Opening config... OK");
+                Console.WriteLine("OK");
             }
         }
 
         public static void ScanDir()
         {
-            Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Scan rEFInd Directory");
-            Console.WriteLine();
-            String ESP = MountESP();
-            var b = Process.Start("cmd.exe", "/c" + $"Dir /s /b {ESP}EFI\\rEFInd > \"%UserProfile%\\Desktop\\rEFInd Dir.txt\"");
-            b.WaitForExit();
-            int bExitCode = b.ExitCode;
+            Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Scan rEFInd Directory\n");
+            var Scan = Process.Start("cmd.exe", "/c" + $"Dir /s /b " + MountESP() + "EFI\\rEFInd > \"%UserProfile%\\Desktop\\rEFInd Dir.txt\"");
+            Console.Write("Scanning Directory... ");
+            Scan.WaitForExit();
 
-            if (b.ExitCode > 0)
+            if (Scan.ExitCode > 0)
             {
-                Console.WriteLine("Scanning... !ERROR!");
+                Console.WriteLine("!ERROR!");
                 Environment.Exit(1);
             }
             else
             {
-                Console.WriteLine("Scanning... OK");
+                Console.WriteLine("OK");
             }
         }
 
-        public static void rEFIndRemove()
+        public static void Remove()
         {
-            Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Removing rEFInd");
-            Console.WriteLine();
+            Console.WriteLine("\nrEFInd AUTOMENU console tool v1.5.3 - Removing rEFInd\n");
             String ESP = MountESP();
+            Console.Write("Removing rEFInd... ");
             if (Directory.Exists(@$"{ESP}EFI\rEFInd"))
             {
                 Directory.Delete(@$"{ESP}EFI\rEFInd", true);
-                if (!Directory.Exists(@$"{ESP}EFI\rEFInd"))
+                if (Directory.Exists(@$"{ESP}EFI\rEFInd"))
                 {
-                    Console.WriteLine("Removing rEFInd... OK");
-                    Environment.Exit(0);
-                }
-                else
-                {
-                    Console.WriteLine("Removing rEFInd... ERROR");
+                    Console.WriteLine("!ERROR!");
                     Environment.Exit(1);
                 }
+                else
+                    Console.WriteLine("OK");
             }
             else
             {
                 Console.WriteLine("rEFInd is not installed on current computer !");
                 Environment.Exit(1);
-            }
-        }
-            
-
-        public static void ThemeInstall(String ESP)
-        {
-            if (File.Exists(@"theme\theme.conf"))
-            {
-                Process.Start("cmd.exe", "/c" + $@"xcopy Theme {ESP}EFI\rEFInd\Theme");
-                if (File.Exists(@"S:\EFI\rEFInd\Theme\theme.conf"))
-                {
-                    Console.WriteLine("Theme install... OK");
-                    Environment.Exit(0);
-                }
-                else
-                {
-                    Console.WriteLine("Theme install... !ERROR!");
-                    Environment.Exit(0);
-                }
             }
         }
     }
