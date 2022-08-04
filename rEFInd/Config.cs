@@ -1,66 +1,124 @@
-﻿namespace rEFInd
+﻿using System.Diagnostics;
+using System.Text;
+
+namespace rEFInd
 {
-    internal class Config
+    internal class Config : WorkClass
     {
-        /*
-        internal void USB(string Drive, String Theme)
+        public static StreamWriter? ConfigFile; //Конфиг для записи
+        internal static void Computer(bool Desktop = false)
         {
-            Can be added some instruments to menu generator like :
-            Grub2 FileManager, Xorboot
-        }
-        */
+            //Создание загрузочного меню
+            string rEFIndInstall = Desktop ? Environment.GetEnvironmentVariable("USERPROFILE") + @"\Desktop\rEFInd" : ESP + @"EFI\rEFInd\";
+            SpinTasker.Start("Config generation");
+            ConfigFile = new (rEFIndInstall + @"\refind.conf");
 
-        internal static void Computer(string ESP, string Theme)
-        {
-            Console.Write("Config generation... ");
-            string Arch = Install.ArchParse()[0];
-            StreamWriter sw = new(@$"{ESP}EFI\rEFInd\rEFInd.conf");
+            //Конфигурация rEFInd
+            ConfigFile.WriteLine("Use_nvram 1");
+            ConfigFile.WriteLine("Timeout 20");
+            ConfigFile.WriteLine("use_graphics_for linux, windows");
+            ConfigFile.WriteLine($"showtools shutdown, reboot, memtest, shell, firmware");
+            ConfigFile.WriteLine($"scanfor manual, biosexternal, external, optical, CD\n");
 
-            sw.WriteLine("Use_nvram 1");
-            sw.WriteLine("Timeout 20");
-            sw.WriteLine("use_graphics_for linux, windows");
-            sw.WriteLine($"showtools shutdown, reboot, memtest, shell, firmware");
-            sw.WriteLine($"scanfor manual, biosexternal, external, optical, CD\n");
-
-            //CGL - Config Generator List
-            Dictionary<string, string> CGL = new();
-            CGL.Add(@$"{ESP}EFI\Microsoft", "menuentry \"Windows\" {\n\tloader /EFI/Microsoft/Boot/bootmgfw.efi\n\tOstype Windows\n\tGraphics on\n}\n");
-            CGL.Add(@$"{ESP}EFI\HackBGRT", "menuentry \"HackBGRT\" {\n\tloader /EFI/HackBGRT/boot" + Arch + ".efi\n\tOstype Windows\n\tGraphics on\n}\n");
-            CGL.Add(@$"{ESP}EFI\PhoenixOS", "menuentry \"Phoenix OS\" {\n\tloader /EFI/PhoenixOS/kernel\n\tinitrd /EFI/PhoenixOS/initrd.img\n\tOptions \"quiet root=/dev/ram0 androidboot.hardware=android_x86 SRC=/PhoenixOS vga=788\"\n\tOstype Linux\n\tGraphics on\n}\n");
-            CGL.Add(@$"{ESP}EFI\ubuntu", "menuentry \"Ubuntu\" {\n\tloader /EFI/ubuntu/shim" + Arch + ".efi\n\tOstype Linux\n\tGraphics on\n}\n");
-            CGL.Add(@$"{ESP}EFI\debian", "menuentry \"Debian\" {\n\tloader /EFI/debian/shim" + Arch + ".efi\n\tOstype Linux\n\tGraphics on\n}\n");
-            CGL.Add(@$"{ESP}EFI\centos", "menuentry \"CentOS\" {\n\tloader /EFI/centos/shim" + Arch + ".efi\n\tOstype Linux\n\tGraphics on\n}\n");
-            CGL.Add(@$"{ESP}EFI\fedora", "menuentry \"Fedora\" {\n\tloader /EFI/fedora/shim" + Arch + ".efi\n\tOstype Linux\n\tGraphics on\n}\n");
-            CGL.Add(@$"{ESP}EFI\kali", "menuentry \"Kali\" {\n\tloader /EFI/kali/grub" + Arch + ".efi\n\tOstype Linux\n\tGraphics on\n}\n");
-
-            foreach (KeyValuePair<string, string> CGLWork in CGL)
-                if (Directory.Exists(CGLWork.Key))
-                    sw.WriteLine(CGLWork.Value);
-
-            if (!string.IsNullOrWhiteSpace(Theme))
-                sw.WriteLine($"include theme/theme.conf");
-
-            sw.Close();
-
-            /*
-            Возможно сделаю :
-            String RedHat = "menuentry RedHat {\n\tloader EFI//.efi\n\tOstype Linux\n\tGraphics on\n}";
-            String Mandriva = "menuentry Mandriva {\n\tloader EFI//.efi\n\tOstype Linux\n\tGraphics on\n}";
-            String OpenSUSE = "menuentry OpenSUSE {\n\tloader EFI//.efi\n\tOstype Linux\n\tGraphics on\n}";
-            String Manjaro = "menuentry Manjaro {\n\tloader EFI//.efi\n\tOstype Linux\n\tGraphics on\n}";
-            String Mint = "menuentry Mint {\n\tloader EFI//.efi\n\tOstype Linux\n\tGraphics on\n}";
-            */
-
-            if (File.Exists(@$"{ESP}EFI\rEFInd\refind.conf"))
+            if (Options.IgnoreCGL)
             {
-                Console.WriteLine("OK");
+                //Бета функция! не рекомендуется к использованию
+                //Генерирует загрузочное меню по загрузчикам на ESP игнорируюя заданный список (CGL)
+                Menuentry(Name: "Windows", Loader: @"EFI\Microsoft\Boot\bootmgfw.efi", OSType: "Windows");
+                foreach (string Dir in Directory.GetDirectories(ESP + "EFI"))
+                    if (Directory.EnumerateFiles(Dir, "*.efi").Any())
+                        foreach (string file in Directory.GetFiles(Dir, "*" + Arch[0] + ".efi"))
+                        {
+                            string LoaderDir = Dir.Substring(7);
+                            if (!LoaderDir.Contains("Boot"))
+                                Menuentry(Name: LoaderDir, Loader: file.Substring(3));
+                        }
             }
+            else //Загрузочные записи rEFInd поддерживаемых ОС (Config Generator List)
+            {
+                //Windows, DOS
+                Menuentry(Name: "Windows", Loader: @"EFI\Microsoft\Boot\bootmgfw.efi", OSType: "Windows", Disabled: File.Exists(ESP + @"EFI\HackBGRT\boot" + Arch[0] + ".efi"));
+                Menuentry(Name: "HackBGRT", Loader: @"EFI\HackBGRT\boot" + Arch[0] + ".efi", OSType: "Windows");
+
+                //Android Based
+                Menuentry(Name: "PhoenixOS", Loader: @"EFI\PhoenixOS\kernel", InitRD: @"EFI\PhoenixOS\initrd.img", Options: "quiet root=/dev/ram0 androidboot.hardware=android_x86 SRC=/PhoenixOS vga=788", OSType: "Linux");
+
+                //UNIX-Like
+                Menuentry(Name: "Ubuntu", Loader: @"EFI\ubuntu\shim" + Arch[0] + ".efi", OSType: "Linux");
+                Menuentry(Name: "CentOS", Loader: @"EFI\centos\shim" + Arch[0] + ".efi", OSType: "Linux");
+                Menuentry(Name: "Debian", Loader: @"EFI\debian\shim" + Arch[0] + ".efi", OSType: "Linux");
+                Menuentry(Name: "Fedora", Loader: @"EFI\fedora\shim" + Arch[0] + ".efi", OSType: "Linux");
+                Menuentry(Name: "Kali", Loader: @"EFI\kali\grub" + Arch[0] + ".efi", OSType: "Linux");
+
+                //Tools
+                Menuentry(Name: "Grub FileManager", Loader: @"EFI\GrubFM\grubfm" + Arch[0] + ".efi", OSType: "Linux");
+            }
+
+            //Установка темы
+            if (!string.IsNullOrWhiteSpace(Options.Theme))
+                ConfigFile.Write("Include Theme\\theme.conf");
+
+            //Запись результата
+            ConfigFile.Close();
+            SpinTasker.Stop(File.Exists(ESP + @"EFI\rEFInd\refind.conf"), ErrorMessage: "Impossible to save Config File");
+        }
+
+        internal static void USB()
+        {
+            //Создание загрузочного меню
+            string rEFIndInstall = Drive.Name + @"EFI\Boot\";
+            SpinTasker.Start("Config generation");
+            ConfigFile = new(rEFIndInstall + @"\refind.conf");
+
+            //Конфигурация rEFInd
+            ConfigFile.WriteLine("Use_nvram 1");
+            ConfigFile.WriteLine("Timeout 20");
+            ConfigFile.WriteLine("use_graphics_for linux, windows");
+            ConfigFile.WriteLine($"showtools shutdown, reboot, memtest, shell, firmware");
+            ConfigFile.WriteLine($"scanfor manual, biosexternal, external, optical, CD\n");
+
+            if (Options.IgnoreCGL)
+            {
+                //Бета функция! не рекомендуется к использованию
+                //Генерирует загрузочное меню по загрузчикам на ESP игнорируюя заданный список (CGL)
+                foreach (string Dir in Directory.GetDirectories(ESP + "EFI"))
+                    if (Directory.EnumerateFiles(Dir, "*.efi").Any())
+                        foreach (string file in Directory.GetFiles(Dir, "*" + Arch[0] + ".efi"))
+                        {
+                            string LoaderDir = Dir.Substring(7);
+                            if (!LoaderDir.Contains("Boot"))
+                                Menuentry(Name: LoaderDir, Loader: file.Substring(3));
+                        }
+            }
+
+            if (!string.IsNullOrWhiteSpace(Options.Theme))
+                ConfigFile.Write("Include Theme\\theme.conf");
+        }
+
+        internal static void Menuentry(string Name, string Loader, string? Icon = null, string? Volume = null, string? InitRD = null, string? Options = null, string? OSType = null, bool Graphics = true, bool Disabled = false)
+        {
+            StringBuilder MenuEntry = new($"menuentry \"" + Name + "\" {", 50);
+
+            //Сканируем загрузчик
+            if (OSType.ToLower() == "linux" && Directory.Exists(ESP + Loader))
+                MenuEntry.Append("\n\tloader " + Directory.GetFiles(Loader, Arch[0])[0]);
             else
-            {
-                Console.WriteLine("!ERROR!");
-                Automenu.Clear();
-                Environment.Exit(1);
-            }
+                MenuEntry.Append("\n\tloader " + Loader);
+
+            //Добавляем парметры
+            if (!string.IsNullOrWhiteSpace(Icon))    MenuEntry.Append("\n\ticon " + Icon);
+            if (!string.IsNullOrWhiteSpace(Volume))  MenuEntry.Append("\n\tvolume " + Volume);
+            if (!string.IsNullOrWhiteSpace(InitRD))  MenuEntry.Append("\n\tinitrd " + InitRD);
+            if (!string.IsNullOrWhiteSpace(Options)) MenuEntry.Append($"\n\toptions \"{Options}\"");
+            if (!string.IsNullOrWhiteSpace(OSType))  MenuEntry.Append("\n\tostype " + OSType);
+            if (Graphics)                            MenuEntry.Append("\n\tGraphics on");
+            if (Disabled)                            MenuEntry.Append("\n\tDisabled");
+            MenuEntry.Append("\n}\n");
+
+            //Отправляем в refind.conf
+            if (File.Exists(ESP + Loader))
+                ConfigFile.WriteLine(MenuEntry);
         }
+
     }
 }
