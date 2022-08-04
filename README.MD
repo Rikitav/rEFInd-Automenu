@@ -73,7 +73,7 @@ If you have already installed rEFInd on a computer, it will need to be removed f
 Powered by CommandLineParser
 
 # Supported : Поддерживается
-## Operating Systems : Операционные системы
+### Operating Systems : Операционные системы
 1. Windows 7-11 or HackBGRT
 2. PhoenixOS
 3. Linux Ubuntu
@@ -82,7 +82,7 @@ Powered by CommandLineParser
 6. Fedora Linux
 7. Kali Linux
 
-## Utilities : Утилиты
+### Utilities : Утилиты
 1. Grub File Manager
 
 
