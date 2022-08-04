@@ -5,7 +5,7 @@ This program scans computer for the EFI boot loaders of systems, makes config on
 rEFInd АВТОМЕНЮ : Генерация конфига и установка                       
 Эта программа сканирует компьютер на наличие EFI загрузчиков систем, делает по ним конфиг и устанавливает "rEFInd Менеджер загрузки".
 
-# Notification : Предупреждение
+## Notification : Предупреждение
 If you have already installed rEFInd on a computer, it will be deleted for installation!
 Если у вас уже установлена rEFInd на компьютере она будет удалена для установки !
 
