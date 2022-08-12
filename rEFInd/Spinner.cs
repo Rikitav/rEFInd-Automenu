@@ -23,7 +23,7 @@
             active = true;
 
             SpinThread = new Thread(Spin);
-            if (!this.SpinThread.IsAlive)
+            if (!SpinThread.IsAlive)
                 SpinThread.Start();
         }
 

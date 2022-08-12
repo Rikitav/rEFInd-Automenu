@@ -18,11 +18,11 @@
 	<SignAssembly>False</SignAssembly>
 	<AnalysisLevel>latest</AnalysisLevel>
 	<Description>Installer and Automenu configurator for rEFInd Boot Management</Description>
-	<Copyright>Copyright || Tim4ik 2022</Copyright>
+	<Copyright>Copyright (C) || Tim4ik 2022</Copyright>
 	<PackageLicenseFile>..\LICENSE.MD</PackageLicenseFile>
 	<FileVersion>1.8.2.6</FileVersion>
 	<AssemblyVersion>1.8.2.6</AssemblyVersion>
-	<Version>1.8.2.6</Version>
+	<Version>2.1.4.7</Version>
 	<RepositoryUrl>https://github.com/Tim4ik/rEFInd-Automenu</RepositoryUrl>
 	<RepositoryType>git</RepositoryType>
 	<PackageProjectUrl>https://vk.com/refind_project?t2fs=b4c57abcb2f0710be3_3&amp;t2fs=b4c57abcb2f0710be3_6&amp;t2fs=b4c57abcb2f0710be3_9</PackageProjectUrl>
@@ -83,6 +83,9 @@
   </ItemGroup>
 
   <ItemGroup>
+    <None Update="extmounter.exe">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Update="README.MD">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>

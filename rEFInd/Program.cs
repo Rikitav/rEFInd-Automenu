@@ -5,6 +5,7 @@ using System.IO.Compression;
 using System.Net;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Linq;
 
 namespace rEFInd
 {
@@ -37,10 +38,7 @@ namespace rEFInd
         [Option('f', "Format", HelpText = "If drive has File System not FAT32, parametr allow to format him\nfor example : \n\"refind -f --install E:\\\" - rEFInd should be installed on flash drive E:\\ with formating into FAT32 File system if nedded\nCan be Combined only with \'--Install\' parametr")]
         public bool Format { get; set; }
 
-        [Option("IgnoreCGL", HelpText = "Beta function !!! \nScan EFI System Partition for boot loaders and make Loader Config ignoring Config Generator List\nfor example : \n\"refind --IgnoreCGL --install\" - rEFInd should be installed on current Computer ignoring Config Generator List\nCan be Combined only with \'--Install\' parametr")]
-        public bool IgnoreCGL { get; set; }
-
-        [Option("Wait")]
+        [Option('w', "Wait")]
         public bool Wait { get; set; }
     }
 
@@ -51,18 +49,19 @@ namespace rEFInd
         public static string Version = Assembly.GetExecutingAssembly().GetName().Version.ToString(); //Версия сборки
         public static string Temp = Path.GetTempPath();                                              //Путь к папке Temp
         public static DriveInfo[] AllDrives = DriveInfo.GetDrives();                                 //Список всех накопителей
-        public static bool InstallParsed;                                                            //Указан ли параметр "-i"
         public static SpinTasker SpinTasker = new();                                                 //SpinTasker
 
         //Информация необходимая для работы
-        public static Options? Options;   //Аргументы CMD парсера
-        public static DriveInfo? Drive;   //USB для установки
-        public static string[]? Arch;     //Aрхитектура процессора
-        public static string? ESP;        //Диск подключенный как ESP
-        public static string? rEFIndData; //Путь к rEFInd Data
+        public static Options? Options;     //Аргументы CMD парсера
+        public static DriveInfo? Drive;     //USB для установки
+        public static string[]? Arch;       //Aрхитектура процессора
+        public static string? ESP;          //Диск подключенный как ESP
+        public static string? rEFIndData;   //Путь к rEFInd Data
+        public static bool InstallParsed;   //Указан ли параметр "-i"
+        public static string? Installation; //Метод установки
 
         //Методы
-        public static void Error(string ErrorMessage = "Unexpected Error")                        //Метод воспроизводящий ошибки 
+        public static object Error(string ErrorMessage = "Unexpected Error")                       //Метод воспроизводящий ошибки 
         {
             Console.ForegroundColor = ConsoleColor.Red;
             Console.WriteLine("!ERROR!\n" + ErrorMessage);
@@ -74,6 +73,7 @@ namespace rEFInd
                 Console.ReadLine();
 
             Environment.Exit(1);
+            return "End";
         }
         public static void Clear()                                                                //Метод очистки рабочего мусора 
         {
@@ -137,21 +137,24 @@ namespace rEFInd
         static void Main(string[] args)
         {
             Console.CursorVisible = false;
-            var parser = new Parser(with => with.HelpWriter = null);
-            var parserResult = Parser.Default.ParseArguments<Options>(args);
-            parserResult.WithParsed(Opt =>
+            var ParserResult = Parser.Default.ParseArguments<Options>(args);
+            ParserResult.WithParsed(Opt =>
             {
                 //Установка перменных
                 Options = Opt;
 
-                //Проверка на установленный параметр 'Install'
-                if ((from Arg in args where Arg.ToLower().Contains("-i") select Arg).Any())
-                {
-                    if (args[^1].ToLower().Contains("-i"))
-                        InstallParsed = true;
-                    else
-                        Error("\'Install\' Parametr can only be indicated at the end");
-                }
+                //Проверка на аргументы командной строки
+                if (args.Length == 0)
+                    Error("No CMD arguments, try \"" + ProgName + " --help\"");
+
+                InstallParsed = (from arg in Environment.GetCommandLineArgs() where arg.ToLower().Contains("-i") select arg).Any();
+                if (Options.Install == @":\" | Options.Install == ":" | Options.Install == @"\")
+                    Error("Incorect \'Install\' sintax");
+
+                //Проверка на поддержку и активированный UEFI (Позаимствовал)
+                GetFirmwareType("", "{00000000-0000-0000-0000-000000000000}", IntPtr.Zero, 0);
+                if (Marshal.GetLastWin32Error() == ERROR_INVALID_FUNCTION)
+                    Error("Your mainboard doesn't support UEFI and/or Windows is installed in legacy BIOS mode\nrEFInd can be installed only on UEFI Machines");
 
                 //Приветствие
                 Console.WriteLine("rEFInd Automenu v" + Version + "\n");
@@ -159,15 +162,6 @@ namespace rEFInd
                 Console.WriteLine("Preparation for Work :");
                 Console.ForegroundColor = ConsoleColor.White;
                 Clear();
-
-                //Проверка на аргументы командной строки
-                if (args.Length == 0)
-                    Error("No CMD arguments, try \"" + ProgName + " --help\"");
-
-                //Проверка на поддержку и активированный UEFI (Позаимствовал)
-                GetFirmwareType("", "{00000000-0000-0000-0000-000000000000}", IntPtr.Zero, 0);
-                if (Marshal.GetLastWin32Error() == ERROR_INVALID_FUNCTION)
-                    Error("Your mainboard doesn't support UEFI and/or Windows is installed in legacy BIOS mode\nrEFInd can be installed only on UEFI Machines");
 
                 //Подключение раздела Efi System Partition
                 SpinTasker.Start("Mounting ESP");
@@ -194,6 +188,7 @@ namespace rEFInd
                 {
                     SpinTasker.Start("Getting Architecture");
                     string ArchInit = string.IsNullOrWhiteSpace(Options.Architecture) ? Environment.GetEnvironmentVariable("PROCESSOR_ARCHITECTURE") : Options.Architecture.ToUpper();
+
                     switch (ArchInit)
                     {
                         case "AMD64": Arch = new string[] { "x64",  "AMD x64 Processor - rEFInd_x64",                    "AMD64" }; break;
@@ -202,6 +197,7 @@ namespace rEFInd
                         case "ARM64": Arch = new string[] { "aa64", "Advanced RISC Machine x64 Processor - rEFInd_aa64", "ARM64" }; break;
                         default: SpinTasker.Stop(ErrorMessage: $"rEFInd do not support {ArchInit} processors"); break;
                     }
+
                     SpinTasker.Stop(!string.IsNullOrWhiteSpace(Arch[0]), ErrorMessage: "Unexpected Error", OkMessage: Arch[1]);
                 }
 
@@ -245,7 +241,77 @@ namespace rEFInd
                 }
 
                 //Начало выполнения
-                Work();
+                Console.ForegroundColor = ConsoleColor.Blue;
+                Console.WriteLine("\nStarting Work :");
+                Console.ForegroundColor = ConsoleColor.White;
+
+                if (Options.Delete) //Опция для удаления rEFInd с компьютера
+                {
+                    SpinTasker.Start("Removing rEFInd");
+                    if (Directory.Exists(ESP + $@"EFI\rEFInd"))
+                    {
+                        var Remove = Process.Start("cmd.exe", "/c" + $"RmDir /s /q " + ESP + "EFI\\rEFInd");
+                        Remove.WaitForExit();
+                        SpinTasker.Stop(!(Remove.ExitCode > 0), ErrorMessage: "CMD \'RmDir\' Сommand Exception : " + Remove.ExitCode);
+                    }
+                    else
+                        SpinTasker.Stop(ErrorMessage: "rEFInd is not installed on this computer");
+                }
+
+                if (InstallParsed) //Здесь производится установка rEFInd
+                {
+                    if (Opt.Install.ToLower() == "computer")
+                    {
+                        Install.Computer();
+                        Config.Computer();
+                    }
+                    else if (Opt.Install.ToLower() == "desktop")
+                    {
+                        Install.Computer(Desktop: true);
+                        Config.Computer(Desktop: true);
+                    }
+                    else if (IsDrive().Any())
+                    {
+                        Drive = IsDrive().First();
+                        Install.USB();
+                        Config.USB();
+                    }
+                    else
+                        Error("Unknown --Install commmand\nTry " + ProgName + " --Help");
+
+                    static IEnumerable<DriveInfo> IsDrive()
+                    {
+                        foreach (var SearchDrive in AllDrives)
+                            if (SearchDrive.Name.ToString().ToLower().Contains(Options.Install.ToLower()))
+                                yield return SearchDrive;
+                    }
+                }
+
+                if (Options.Config) //В этом методе мы открываем конфиг rEFInd установленного на компьютер (refind.conf)
+                {
+                    SpinTasker.Start("Opening config");
+                    if (File.Exists(ESP + $@"EFI\rEFInd\refind.conf"))
+                    {
+                        var Config = Process.Start("notepad", ESP + $@"EFI\rEFInd\refind.conf");
+                        Config.WaitForExit();
+                        SpinTasker.Stop(!(Config.ExitCode > 0), ErrorMessage: "Notepad Exception : " + Config.ExitCode);
+                    }
+                    else
+                        SpinTasker.Stop(ErrorMessage: "Notepad Exception : Cannot Find Config File");
+                }
+
+                if (Options.Dir) //Метод который сканирует директорию с rEFInd и записывает рузультат в текст. документ на рабочем столе
+                {
+                    SpinTasker.Start("Scanning Directory");
+                    if (Directory.Exists(ESP + $@"EFI\rEFInd"))
+                    {
+                        var Scan = Process.Start("cmd.exe", "/c" + $"Dir /s /b " + ESP + "EFI\\rEFInd > \"%UserProfile%\\Desktop\\rEFInd Dir.txt\"");
+                        Scan.WaitForExit();
+                        SpinTasker.Stop(!(Scan.ExitCode > 0), ErrorMessage: "CMD \'Dir\' Сommand Exception : " + Scan.ExitCode);
+                    }
+                    else
+                        SpinTasker.Stop(ErrorMessage: "CMD \'Dir\' Сommand Exception : Cannot Find \"rEFInd\" Directory");
+                }
 
                 //Конец выполнения
                 Console.CursorVisible = true;
@@ -256,73 +322,6 @@ namespace rEFInd
 
                 return;
             });
-        }
-
-        public static void Work()
-        {
-            Console.ForegroundColor = ConsoleColor.Blue;
-            Console.WriteLine("\nStarting Work :");
-            Console.ForegroundColor = ConsoleColor.White;
-
-            if (Options.Delete) //Опция для удаления rEFInd с компьютера
-            {
-                SpinTasker.Start("Removing rEFInd");
-                if (Directory.Exists(ESP + $@"EFI\rEFInd"))
-                {
-                    var Remove = Process.Start("cmd.exe", "/c" + $"RmDir /s /q " + ESP + "EFI\\rEFInd");
-                    Remove.WaitForExit();
-                    SpinTasker.Stop(!(Remove.ExitCode > 0), ErrorMessage: "CMD \'RmDir\' Сommand Exception : " + Remove.ExitCode);
-                }
-                else
-                    SpinTasker.Stop(ErrorMessage: "rEFInd is not installed on this computer");
-            } 
-
-            if (InstallParsed) //Здесь производится установка rEFInd
-            {
-                if (string.IsNullOrWhiteSpace(Options.Install))
-                {
-                    Install.Computer();
-                    Config.Computer();
-                }
-                else if (Options.Install.Equals("desktop", StringComparison.InvariantCultureIgnoreCase))
-                {
-                    Install.Computer(Desktop: true);
-                    Config.Computer(Desktop: true);
-                }
-                else if (Install.DriveExists())
-                {
-                    Install.USB();
-                    Config.USB();
-                }
-                else
-                    SpinTasker.Stop(false, ErrorMessage: "Unknown --Install commmand\nTry " + ProgName + " --Help");
-            }  
-
-            if (Options.Config) //В этом методе мы открываем конфиг rEFInd установленного на компьютер (refind.conf)
-            {
-                SpinTasker.Start("Opening config");
-                if (File.Exists(ESP + $@"EFI\rEFInd\refind.conf"))
-                {
-                    var Config = Process.Start("notepad", ESP + $@"EFI\rEFInd\refind.conf");
-                    Config.WaitForExit();
-                    SpinTasker.Stop(!(Config.ExitCode > 0), ErrorMessage: "Notepad Exception : " + Config.ExitCode);
-                }
-                else
-                    SpinTasker.Stop(ErrorMessage: "Notepad Exception : Cannot Find Config File");
-            } 
-
-            if (Options.Dir) //Метод который сканирует директорию с rEFInd и записывает рузультат в текст. документ на рабочем столе
-            {
-                SpinTasker.Start("Scanning Directory");
-                if (Directory.Exists(ESP + $@"EFI\rEFInd"))
-                {
-                    var Scan = Process.Start("cmd.exe", "/c" + $"Dir /s /b " + ESP + "EFI\\rEFInd > \"%UserProfile%\\Desktop\\rEFInd Dir.txt\"");
-                    Scan.WaitForExit();
-                    SpinTasker.Stop(!(Scan.ExitCode > 0), ErrorMessage: "CMD \'Dir\' Сommand Exception : " + Scan.ExitCode);
-                }
-                else
-                    SpinTasker.Stop(ErrorMessage: "CMD \'Dir\' Сommand Exception : Cannot Find \"rEFInd\" Directory");
-            }    
         }
     }
 }
