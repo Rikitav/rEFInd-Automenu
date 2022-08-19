@@ -1,7 +1,3 @@
-# rEFInd Automenu
-rEFInd AUTOMENU : Config generate and install                       
-This program scans computer for installed Operating Systems, makes config on them and installing "rEFInd Boot Manager"
-
 # Notification
 If you have already installed rEFInd on a computer, it will need to be removed for installation !                                                                  
 In order for the program to work, you need to install .NET FRAMEWORK 6.0.1
