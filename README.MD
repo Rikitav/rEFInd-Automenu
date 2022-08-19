@@ -4,7 +4,7 @@ This program scans computer for installed Operating Systems, makes config on the
 
 # Notification
 If you have already installed rEFInd on a computer, it will need to be removed for installation !                                                                  
-In order for the program to work, you need to install .NET FRAMEWORK 6.0.1, as well as the Ext file system, everything you need lies in the Redist folder right next to the executable file !
+In order for the program to work, you need to install .NET FRAMEWORK 6.0.1
 
 # Usage
 1. CD to program folder in CMD
