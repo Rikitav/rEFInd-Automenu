@@ -11,7 +11,7 @@ Powered by CommandLineParser
 # Supported
 ### Operating Systems
 1. Windows 7-11 or HackBGRT
-2. Maybe all Linux systems
+2. Maybe all Linux Distributions
 3. PhoenixOS
 
 ### Utilities
