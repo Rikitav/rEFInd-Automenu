@@ -8,15 +8,10 @@ In order for the program to work, you need to install .NET FRAMEWORK 6.0.1
 3. For more Information Type command "refind --help"                                                                                     
 Powered by CommandLineParser
 
-# Supported
-### Operating Systems
-1. Windows 7-11 or HackBGRT
-2. Maybe all Linux Distributions
+# Supported Operating Systems
+1. EFI Windows 7-11 or HackBGRT
+2. EFI Linux Distributions
 3. PhoenixOS
-
-### Utilities
-1. Grub File Manager
-
 
 # Links
 Group in VKontakte (Only Russia)                                  
