@@ -30,7 +30,7 @@
 
   <ItemGroup>
     <Reference Include="Rikitav.IO.ExtensibleFirmware">
-      <HintPath>..\Packages\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.dll</HintPath>
+      <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.dll</HintPath>
     </Reference>
   </ItemGroup>
 

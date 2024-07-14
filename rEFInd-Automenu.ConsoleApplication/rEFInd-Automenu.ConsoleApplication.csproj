@@ -40,13 +40,13 @@
 
   <ItemGroup>
     <Reference Include="Plasma.Controls">
-      <HintPath>..\Packages\Plasma-Classes\Plasma.Controls.dll</HintPath>
+      <HintPath>..\Libraries\Plasma-Classes\Plasma.Controls.dll</HintPath>
     </Reference>
     <Reference Include="Plasma.Tasks">
-      <HintPath>..\Packages\Plasma-Classes\Plasma.Tasks.dll</HintPath>
+      <HintPath>..\Libraries\Plasma-Classes\Plasma.Tasks.dll</HintPath>
     </Reference>
     <Reference Include="Rikitav.IO.ExtensibleFirmware">
-      <HintPath>..\Packages\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.dll</HintPath>
+      <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.dll</HintPath>
     </Reference>
   </ItemGroup>
 
