@@ -1,0 +1,53 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net6.0-windows10.0.17763.0</TargetFramework>
+    <RootNamespace>rEFInd_Automenu.ConsoleApplication</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <StartupObject>rEFInd_Automenu.ConsoleApplication.ConsoleProgram</StartupObject>
+    <ApplicationIcon>Properties\rEFInd-Automenu.ico</ApplicationIcon>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+    <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
+    <Version>2.0.0.0</Version>
+    <Authors>Rikitav Tim4ik</Authors>
+    <Company>Rikitav</Company>
+    <AssemblyName>rEFInd</AssemblyName>
+    <BaseOutputPath>..\bin\Console</BaseOutputPath>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <DebugType>embedded</DebugType>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="Properties\rEFInd-Automenu.ico" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommandLineParser" Version="2.9.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\rEFInd-Automenu.Configuration\rEFInd-Automenu.Configuration.csproj" />
+    <ProjectReference Include="..\rEFInd-Automenu.Core\rEFInd-Automenu.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Plasma.Controls">
+      <HintPath>..\Packages\Plasma-Classes\Plasma.Controls.dll</HintPath>
+    </Reference>
+    <Reference Include="Plasma.Tasks">
+      <HintPath>..\Packages\Plasma-Classes\Plasma.Tasks.dll</HintPath>
+    </Reference>
+    <Reference Include="Rikitav.IO.ExtensibleFirmware">
+      <HintPath>..\Packages\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
+</Project>

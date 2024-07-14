@@ -1,0 +1,9 @@
+{
+  "profiles": {
+    "rEFInd-Automenu.ConsoleApplication": {
+      "commandName": "Project",
+      "commandLineArgs": "install --computer -x -t \"C:\\Users\\gutii\\Desktop\\refind-theme-regular\"",
+      "remoteDebugEnabled": false
+    }
+  }
+}
