@@ -2,10 +2,11 @@
 <h3 align="center">rEFInd Automenu is utility designed for installing and configuring the rEFInd boot manager</h1>
 
 # Features
-* **Installing**<br>rEFInd can be installed on a PC or unpacked onto a flash drive as a fallback loader
-* **Configuration**<br>Automatic creation of a configuration file containing all settings and boot entries of their current UEFI platform
-* **Instance updating**<br>The installed instance can be updated to the latest version without the need to replace anything manually
-* **Formalization**<br>Together with rEFInd you can install a beautiful design theme that can be found on the Internet
+* **Installing**<br> rEFInd can be installed on a PC or unpacked onto a flash drive as a fallback loader
+* **Configuration**<br> Automatic creation of a configuration file containing all settings and boot entries of their current UEFI platform
+* **Instance updating**<br> The installed instance can be updated to the latest version without the need to replace anything manually
+* **Formalization**<br> Together with rEFInd you can install a beautiful design theme that can be found on the Internet
+<br>
 
 # Using
 Pass the `--help` param to see available verbs
@@ -22,6 +23,7 @@ Pass the `--help` param to see available verbs
 
   version     Display version information.
 ```
+<br>
 
 # Installation (Install)
 Install verb has the following parameters :
@@ -56,32 +58,64 @@ Install verb has the following parameters :
 
   --version       Display version information.
 ```
+<br>
 
 ## Installation on current computer
 To install rEFInd on the current computer, you must specify the `--computer` parameter.
-<br>
 During installation, there will be
 * unpacked the loader and its accompanying files and directories on the EFI System Partition from the resource archive downloaded from [SourceForge](https://sourceforge.net/projects/refind/) or extracted from the built-in resources
 * Generated rEFInd configuration file containing boot entries for all detected operating systems
 * Changed boot entry {bootmgr} to boot rEFInd
 
-### About the parameters
 * `-l` `--latest`<br> Indicates that the latest available resource archive from the repository should be downloaded, however, if there is already an archive with the latest version in the local storage, then it will be used
 * `-t` `--theme`<br> Specifies the path to the directory where the compatible rEFInd theme is located. The directory must contain the configuration file "theme.conf"!
 * `-a` `-arch`<br> Specifies the specific processor architecture for which rEFInd should be installed. if this parameter is not specified, the architecture is determined automatically. Valid values `AMD64`, `ARM64`, `x86`
 * `-x` `-force`<br> Indicates that if it detects an already installed rEFInd instance, the program will try to remove it first
 * `-f` `-format`<br> Doesn't matter in this context
+<br>
 
 ## Installation on Flash drive
 To install rEFInd on the current computer, you must specify the `--flashdrive` parameter.
-<br>
 During installation there will be
 * unpacked the loader and its accompanying files and directories onto media from the resource archive downloaded from the [SourceForge](https://sourceforge.net/projects/refind/) or extracted from the built-in resources
 * Generated blank configuration file
 
-### About the parameters
 * `-l` `--latest`<br> Indicates that the latest available resource archive from the repository should be downloaded, however, if there is already an archive with the latest version in the local storage, then it will be used
 * `-t` `--theme`<br> Specifies the path to the directory where the compatible rEFInd theme is located. The directory must contain the configuration file "theme.conf"!
 * `-a` `-arch`<br> Specifies the specific processor architecture for which rEFInd should be installed. if this parameter is not specified, all presented bootloaders will be installed
 * `-x` `-force`<br> Indicates that if another fallback bootloader is detected on the drive, the program should remove it along with its directory
 * `-f` `-format`<br> If the flash drive has a file system other than FAT32, the program will format it
+<br>
+
+# Instance management (Instance)
+Instance verb has the following parameters :
+```
+  -R, --Remove    (Group: Instance command) Remove rEFInd from current Computer
+
+  -U, --Update    (Group: Instance command) If rEFInd already installed on
+                  computer, reinstall rEFInd to newest version and regenerate
+                  config file
+                  Else just install rEFInd with clear configuration
+
+  -C, --Config    (Group: Instance command) If rEFInd already installed on
+                  computer, this parametr programm will open "refind.conf"
+
+  --RegenConf     (Group: Instance command) If your config file was corrupted,
+                  you can regenerate it
+
+  --RegenBoot     (Group: Instance command) If rEFInd won't load and you think
+                  it's because BootMgr has redrawn, you can rewrite it to load
+                  rEFInd again
+
+  --help          Display this help screen.
+
+  --version       Display version information.
+```
+<br>
+
+* `-r` `--remove`<br> Indicates that the program should remove the currently installed instance of rEFInd
+* `-u` `--update`<br> Indicates that the program should rewrite the bootloader and its accompanying directories to the newest ones
+* `-c` `--config`<br> Indicates that the program should open the configuration file of the currently installed rEFInd instance
+* `--tegenconf`<br> Indicates that the program should generate and rewrite a configuration file of the currently installed rEFInd instance
+* `--regenboot`<br> Indicates that the program must rewrite the bootmgr entry to boot rEFInd
+<br>
