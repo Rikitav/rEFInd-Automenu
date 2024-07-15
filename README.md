@@ -1,3 +1,4 @@
+
 ![Markdown](https://github.com/Rikitav/rEFInd-Automenu/blob/main/Formalization/banner.png)
 <h3 align="center">rEFInd Automenu is utility designed for installing and configuring the rEFInd boot manager</h1>
 
