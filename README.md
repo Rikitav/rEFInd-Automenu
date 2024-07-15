@@ -26,7 +26,7 @@ Pass the `--help` param to see available verbs
 <br>
 
 # Installation (Install)
-Install verb has the following parameters :
+`Install` verb has the following parameters :
 ```
   --Computer      (Group: Install Destination) Specifies that rEFInd should be
                   installed on the current computer. High parsing priority
@@ -88,7 +88,7 @@ During installation there will be
 <br>
 
 # Instance management (Instance)
-Instance verb has the following parameters :
+`Instance` verb has the following parameters :
 ```
   -R, --Remove    (Group: Instance command) Remove rEFInd from current Computer
 
@@ -119,3 +119,33 @@ Instance verb has the following parameters :
 * `--tegenconf`<br> Indicates that the program should generate and rewrite a configuration file of the currently installed rEFInd instance
 * `--regenboot`<br> Indicates that the program must rewrite the bootmgr entry to boot rEFInd
 <br>
+
+# Getting objects
+`Get` verb has the following parameters :
+```
+  -E, --Embedded    (Group: Get commands) Extract ZIP archive with rEFInd from
+                    program resources
+
+  -A, --Archive     (Group: Get commands) Downloads the rEFInd archive from
+                    SourceForge. You must specify the archive version (For
+                    example, "0.14.0"), or "latest" to download the latest
+                    version
+
+  -S, --SysPar      (Group: Get commands) Mounts the efi system partition to a
+                    visible explorer, or unmount if its already have mount point
+
+  --help            Display this help screen.
+
+  --version         Display version information.
+```
+<br>
+
+* `-e` `-embedded`<br> Indicates that the program should extract the built-in resource archive
+* `-a` `-archive`<br> Indicates that the program should download the rEFInd resource archive from the SourceForge repository.
+* `-s` `-syspar`<br> Indicates that the program should mount the system EFI partition
+<br>
+
+# Testing and requirements
+> [!IMPORTANT]
+> For work require .NET6.0 desktop runtime<br>
+> Recomended to use Windows 10, because of later versions may work incorectly with GUID's
