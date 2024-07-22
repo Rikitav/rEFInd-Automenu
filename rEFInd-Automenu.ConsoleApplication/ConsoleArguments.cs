@@ -1,6 +1,5 @@
 ﻿using CommandLine;
 using rEFInd_Automenu.Booting;
-using System.IO;
 
 namespace rEFInd_Automenu.ConsoleApplication
 {
@@ -22,7 +21,7 @@ namespace rEFInd_Automenu.ConsoleApplication
         [Option('A', "Arch", Default = EnvironmentArchitecture.None, HelpText = "Force set installation arcitecture \nPermissible values : \"AMD64, ARM64, x86\"")]
         public EnvironmentArchitecture Architecture { get; set; }
 
-        [Option('F', "Format", Default = false, HelpText = "")]
+        [Option('F', "Format", Default = false, HelpText = "Indicates that the flash drive must be formatted before installation if it has an invalid file system")]
         public bool FormatDrive { get; set; }
 
         [Option('X', "Force", Default = false, HelpText = "Trying to fix some errors during installation, such as trying to remove an existing rEFInd instance on the computer")]

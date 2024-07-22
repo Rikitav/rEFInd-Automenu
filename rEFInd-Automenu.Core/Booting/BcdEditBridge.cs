@@ -41,7 +41,7 @@ namespace rEFInd_Automenu.Booting
                 throw new BcdeditException("Failed to enumerate fwbootmgr. Empty bcdedit data");
             }
 
-            foreach (Match GuidMatch in Regex.Matches(ExecData, @"(\{.+\})", RegexOptions.Multiline).Cast<Match>())
+            foreach (Match GuidMatch in Regex.Matches(ExecData, @"\{(.+)\}", RegexOptions.Multiline).Cast<Match>())
             {
                 if (!GuidMatch.Success)
                     continue;

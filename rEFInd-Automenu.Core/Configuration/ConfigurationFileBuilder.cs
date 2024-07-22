@@ -142,7 +142,7 @@ namespace rEFInd_Automenu.Configuration
             ConfigurationInstance.Entries.Add(new MenuEntryInfo()
             {
                 EntryName = "Windows",
-                Loader = Path.Combine("EFI", "microsoft", "boot", WinBootDir.EnumerateFiles("*.efi").Last().Name),
+                Loader = Path.Combine("EFI", "microsoft", "boot", WinBootDir.EnumerateFiles("boot*.efi").First().Name),
                 Icon = IconName.Substring(IconName.IndexOf("EFI") - 1),
                 OSType = OSType.Windows
             });
