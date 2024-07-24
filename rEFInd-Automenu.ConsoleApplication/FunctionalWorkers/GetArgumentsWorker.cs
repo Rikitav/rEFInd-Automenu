@@ -166,8 +166,8 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 try
                 {
                     // Downloading by version
-                    log.InfoFormat("Downloading resource archive of vresion : {0}", VersionString);
-                    return WebResourceManager.DownloadArchiveByVersion(Version.Parse(VersionString)).Result;
+                    log.InfoFormat("Downloading resource archive of vresion : {0}", TargetVersion);
+                    return WebResourceManager.DownloadArchiveByVersion(TargetVersion).Result;
                 }
                 catch (Exception exc)
                 {
