@@ -3,6 +3,7 @@ using log4net;
 using log4net.Repository.Hierarchy;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Configuration;
+using rEFInd_Automenu.Configuration.LoaderParsers;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Extensions;
@@ -191,7 +192,14 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                     EspRefindDir.FullName,
                     EspThemeDir.Exists ? EspThemeDir.FullName : string.Empty);
 
+                // Configuring global info
                 configurationBuilder.ConfigureStaticPlatform();
+
+                // Configuring menu entries
+                configurationBuilder.AddWindowsMenuEntry();
+                configurationBuilder.ParseConfigurationEntries(new FwBootmgrLoaderScanner(), ArchitectureInfo.Current);
+
+                // Writing
                 configurationBuilder.WriteConfigurationToFile(EfiConfFile);
                 log.Info("Config file succesfully regenerated");
             });

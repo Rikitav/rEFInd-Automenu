@@ -12,19 +12,19 @@ namespace rEFInd_Automenu.ConsoleApplication
         [Option("FlashDrive", Group = "Install Destination", HelpText = "Specifies that rEFInd should be installed on removable storage as fallback loader. The parameter must contain a drive letter (for example \"C\") or a path to the root directory (for example \"C:\\\"). Medium parsing priority")]
         public DriveInfo? OnFlashDrive { get; set; }
 
-        [Option('L', "Latest", Default = false, HelpText = "Download latest version of rEFInd from SourceForge.com before installation")]
+        [Option('L', "Latest", HelpText = "Download latest version of rEFInd from SourceForge.com before installation")]
         public bool DownloadLatestBin { get; set; }
 
-        [Option('T', "Theme", Default = null, HelpText = "Set path to your Theme folder. The parameter must contain the path to the directory (For example, \"C:\\rEFInd\\Bin\"), and target directory must contain theme configuration file named \"Theme.conf\"")]
+        [Option('T', "Theme", HelpText = "Set path to your Theme folder. The parameter must contain the path to the directory (For example, \"C:\\rEFInd\\Bin\"), and target directory must contain theme configuration file named \"Theme.conf\"")]
         public DirectoryInfo? Theme { get; set; }
 
         [Option('A', "Arch", Default = EnvironmentArchitecture.None, HelpText = "Force set installation arcitecture \nPermissible values : \"AMD64, ARM64, x86\"")]
         public EnvironmentArchitecture Architecture { get; set; }
 
-        [Option('F', "Format", Default = false, HelpText = "Indicates that the flash drive must be formatted before installation if it has an invalid file system")]
+        [Option('F', "Format", HelpText = "Indicates that the flash drive must be formatted before installation if it has an invalid file system")]
         public bool FormatDrive { get; set; }
 
-        [Option('X', "Force", Default = false, HelpText = "Trying to fix some errors during installation, such as trying to remove an existing rEFInd instance on the computer")]
+        [Option('X', "Force", HelpText = "Trying to fix some errors during installation, such as trying to remove an existing rEFInd instance on the computer")]
         public bool ForceWork { get; set; }
     }
 
