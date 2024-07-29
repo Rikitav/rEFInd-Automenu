@@ -1,7 +1,4 @@
 ﻿using log4net;
-using rEFInd_Automenu.Booting;
-using rEFInd_Automenu.Configuration;
-using rEFInd_Automenu.Configuration.LoaderParsers;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Resources;
@@ -38,28 +35,6 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 return;
             }
         }
-
-        /*
-        private static void GenerateConfigFile()
-        {
-            // Setting commands
-            ConsoleControllerCommands commands = ConsoleProgram.GetControllerCommands<ConsoleControllerCommands>();
-
-            // Working
-            log.Info("Generating config file (-c flag)");
-
-            // Generating configuration file
-            ConsoleProgram.Interface.Execute("Generating config file", commands, (ctrl) =>
-            {
-                RefindConfiguration configuration = new RefindConfiguration();
-                configuration.ConfigureStaticPlatform();
-                configuration.ParseConfigurationEntries(new FwBootmgrLoaderScanner(), ArchitectureInfo.Current);
-                configuration.WriteConfigurationToFile(Path.Combine(Environment.CurrentDirectory, "refind.conf"));
-                log.Info("Config file succesfully generated");
-            });
-
-        }
-        */
 
         private static void ExtractResourceArchive()
         {

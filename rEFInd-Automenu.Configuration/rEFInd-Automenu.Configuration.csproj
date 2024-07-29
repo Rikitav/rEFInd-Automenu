@@ -5,7 +5,7 @@
     <RootNamespace>rEFInd_Automenu.Configuration</RootNamespace>
     <Nullable>enable</Nullable>
     <Platforms>AnyCPU;x86;x64</Platforms>
-    <Configurations>Debug;Release;ConOnly</Configurations>
+    <Configurations>Debug;Release</Configurations>
   </PropertyGroup>
 
   <ItemGroup>

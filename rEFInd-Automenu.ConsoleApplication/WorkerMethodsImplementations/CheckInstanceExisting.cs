@@ -1,4 +1,6 @@
-﻿using rEFInd_Automenu.Extensions;
+﻿using log4net.Repository.Hierarchy;
+using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
+using rEFInd_Automenu.Extensions;
 using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System.IO;
@@ -15,6 +17,13 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
             {
                 log.Warn("An attempt was made to execute commands related to working with an installed instance of rEFInd on a system that does not support UEFI");
                 ctrl.Error("Firmware interface is not available on current system");
+            }
+
+            // Checking administrator rights
+            if (!ConsoleProgram.IsElevatedProcess)
+            {
+                log.Warn("An attempt was made to execute UEFI firmware-related commands in a non-administrator process");
+                ctrl.Error("The program was launched without administrator rights.");
             }
 
             // Getting ESP path
@@ -47,7 +56,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
             return ctrl.Success("Installed", EspRefindDir);
         });
 
-        public DirectoryInfo CheckInstanceExisting(bool Force = false) => ConsoleProgram.Interface.ExecuteAndReturn<DirectoryInfo>("Checking Instance", commands, (ctrl) =>
+        public DirectoryInfo CheckInstanceNonExisting(bool Force = false) => ConsoleProgram.Interface.ExecuteAndReturn<DirectoryInfo>("Checking Instance", commands, (ctrl) =>
         {
             // Getting UEFI availablity
             log.Info("Checking firware interface availablity");

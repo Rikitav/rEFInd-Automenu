@@ -11,7 +11,9 @@ using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.Plasma.Tasks.Management;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Security.Principal;
 using System.Text;
+using Windows.Data.Xml.Dom;
 
 namespace rEFInd_Automenu.ConsoleApplication
 {
@@ -19,6 +21,16 @@ namespace rEFInd_Automenu.ConsoleApplication
     {
         // Logger
         public static readonly ILog Logger = LogManager.GetLogger(typeof(ConsoleProgram));
+
+        public static bool IsElevatedProcess
+        {
+            get
+            {
+                using WindowsIdentity identity = WindowsIdentity.GetCurrent();
+                WindowsPrincipal principal = new WindowsPrincipal(identity);
+                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+            }
+        }
 
         // Interface fields
         internal static readonly TaskShell Interface = new TaskShell()
@@ -35,16 +47,24 @@ namespace rEFInd_Automenu.ConsoleApplication
             AppDomain.CurrentDomain.ProcessExit += ProcessExit;
             Interface.AfterControllerError += AfterControllerError;
 
+            //
             // Program header
+            Version[] TitleVersions = new Version[] { EmbeddedResourceManager.rEFIndBin_VersionInResources, Assembly.GetExecutingAssembly().GetName().Version ?? new Version(2, 0, 0, 0) };
+            int MaxVersionLength = TitleVersions.Select(v => v.ToString().Length).Max();
             Console.ForegroundColor = ConsoleColor.White;
             Console.WriteLine();
-            Console.WriteLine(string.Format("rEFInd boot manager {0} (C) Roderick W. Smith", EmbeddedResourceManager.rEFIndBin_VersionInResources));
-            Console.WriteLine(string.Format("rEFInd Automenu {0} (C) Rikitav", Assembly.GetExecutingAssembly().GetName().Version));
+            Console.WriteLine("rEFInd boot manager {0, -" + MaxVersionLength + "} (C) Roderick W. Smith", TitleVersions[0]);
+            Console.WriteLine("rEFInd Automenu     {0, -" + MaxVersionLength + "} (C) Rikitav", TitleVersions[1]);
+            Console.WriteLine();
             Console.ResetColor();
+
+            // This var need for correct output formating
+            bool AnyEnvironmentError = false;
 
             // Checking UEFI availablity
             if (!FirmwareInterface.Available)
             {
+                AnyEnvironmentError = true;
                 Logger.Warn("The program was launched on a system that does not support UEFI. Some features will be disabled");
                 ConsoleInterfaceWriter.WriteWarning("Firmware interface is not available on current system. Some functions will be disabled");
             }
@@ -52,9 +72,21 @@ namespace rEFInd_Automenu.ConsoleApplication
             // Checking processor architecture
             if (!ArchitectureInfo.IsCurrentPlatformSupported())
             {
-                Logger.Warn(RuntimeInformation.OSArchitecture + " Architecture is not capable for rEFInd installation");
-                ConsoleInterfaceWriter.WriteWarning(RuntimeInformation.OSArchitecture + " Architecture is not capable for rEFInd installation");
+                AnyEnvironmentError = true;
+                Logger.Warn(RuntimeInformation.OSArchitecture + " Architecture is not capable for rEFInd installation. Some features will be disabled");
+                ConsoleInterfaceWriter.WriteWarning(RuntimeInformation.OSArchitecture + " Architecture is not capable for rEFInd installation. Some features will be disabled");
             }
+
+            // Checking administrator rights
+            if (!IsElevatedProcess)
+            {
+                AnyEnvironmentError = true;
+                Logger.Warn("The program was launched without administrator rights. Some features will be disabled");
+                ConsoleInterfaceWriter.WriteWarning("The program was launched without administrator rights. Some features will be disabled");
+            }
+
+            if (AnyEnvironmentError)
+                Console.WriteLine();
 
             // CMD arguments Parser
             //StringWriter ParseErrorsWriter = new StringWriter();
@@ -88,7 +120,7 @@ namespace rEFInd_Automenu.ConsoleApplication
                             LogArguments(info);
                             if (!ValidMainArgumentsCount(info, args))
                             {
-                                ConsoleInterfaceWriter.WriteWarning("You can only specify one argument from a group. Type \"refind install --help\" for details.");
+                                ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind install --help\" for details.");
                                 return;
                             }
 
@@ -105,7 +137,7 @@ namespace rEFInd_Automenu.ConsoleApplication
                             LogArguments(info);
                             if (!ValidMainArgumentsCount(info, args))
                             {
-                                ConsoleInterfaceWriter.WriteWarning("You can only specify one argument from a group. Type \"refind instance --help\" for details.");
+                                ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind instance --help\" for details.");
                                 return;
                             }
 
@@ -122,7 +154,7 @@ namespace rEFInd_Automenu.ConsoleApplication
                             LogArguments(info);
                             if (!ValidMainArgumentsCount(info, args))
                             {
-                                ConsoleInterfaceWriter.WriteWarning("You can only specify one argument from a group. Type \"refind get --help\" for details.");
+                                ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind get --help\" for details.");
                                 return;
                             }
 
@@ -197,7 +229,7 @@ namespace rEFInd_Automenu.ConsoleApplication
 
             // 
             string[] FieldNames = Props.Select(x => x.Name).ToArray();
-            string[] TypeNames = Props.Select(x => x.PropertyType.FullName).ToArray();
+            string[] TypeNames = Props.Select(x => x.PropertyType.FullName ?? "NullPropertyName").ToArray();
             string[] Values = Props.Select(x => x.GetValue(ArgumentsInfo)?.ToString() ?? "<NULL>").ToArray();
 
             // 
@@ -219,7 +251,6 @@ namespace rEFInd_Automenu.ConsoleApplication
             }
 
             Logger.Info(builder.ToString());
-            //Environment.Exit(0);
         }
     }
 }

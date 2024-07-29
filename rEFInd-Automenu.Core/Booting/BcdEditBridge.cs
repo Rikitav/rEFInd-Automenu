@@ -1,12 +1,10 @@
 ﻿using log4net;
-using Microsoft.Win32;
 using rEFInd_Automenu.Extensions;
 using rEFInd_Automenu.RedistryExplorer;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -61,7 +59,7 @@ namespace rEFInd_Automenu.Booting
         /// </summary>
         /// <param name="Value"></param>
         /// <returns></returns>
-        public static bool IsBootmgrBackuped([NotNullWhen(true)]out Guid? Value)
+        public static bool IsBootmgrBackuped([NotNullWhen(true)] out Guid? Value)
         {
             Value = null;
 

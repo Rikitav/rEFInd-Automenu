@@ -1,6 +1,4 @@
-﻿using CommandLine;
-using log4net;
-using log4net.Repository.Hierarchy;
+﻿using log4net;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Configuration;
 using rEFInd_Automenu.Configuration.LoaderParsers;
@@ -8,11 +6,7 @@ using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Extensions;
 using rEFInd_Automenu.Installation;
-using Rikitav.IO.ExtensibleFirmware;
-using System.Configuration;
 using System.Diagnostics;
-using System.Reflection;
-using System.Runtime.InteropServices;
 
 namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 {

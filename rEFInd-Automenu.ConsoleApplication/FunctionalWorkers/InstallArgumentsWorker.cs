@@ -12,7 +12,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 {
     public class InstallArgumentsWorker
     {
-        private static ILog log = LogManager.GetLogger(typeof(InstallArgumentsWorker));
+        private static readonly ILog log = LogManager.GetLogger(typeof(InstallArgumentsWorker));
 
         public static void Execute(InstallArgumentsInfo argumentsInfo)
         {
@@ -60,7 +60,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             }
 
             // Trying getting ddestination directory access
-            DirectoryInfo EspRefindDir = methods.CheckInstanceExisting(
+            DirectoryInfo EspRefindDir = methods.CheckInstanceNonExisting(
                 installArguments.ForceWork); // ForceWork
 
             // Getting resource archive
@@ -110,15 +110,17 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             object SyncLockObject = new object();
             ConsoleControllerCommands commands = ConsoleProgram.GetControllerCommands<ConsoleControllerCommands>(SyncLockObject);
             WorkerMethods methods = new WorkerMethods(commands);
+
+            if (installArguments.OnFlashDrive == null)
+                throw new ArgumentNullException(nameof(installArguments.OnFlashDrive));
+
             log.InfoFormat("Started installation on Flash drive {0}", installArguments.OnFlashDrive.Name);
 
-            // Setting processor architecture
-            EnvironmentArchitecture Arch = EnvironmentArchitecture.None;
+            // Checking force architecture param
             if (installArguments.Architecture != EnvironmentArchitecture.None)
             {
-                // Getting current architecture
-                Arch = installArguments.Architecture ;
-                log.InfoFormat("Using a specific architecture : {0}", Arch);
+                // Using a specific architecture
+                log.InfoFormat("Using a specific architecture : {0}", installArguments.Architecture);
             }
 
             // Checking drive info
@@ -157,15 +159,15 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                     // Formating drive to FAT32
                     log.Info("Formatting drive - fs FAT32, Cluster 8192, Fast");
                     ManagementObjectSearcher searcher = new ManagementObjectSearcher(string.Concat("select * from Win32_Volume WHERE DriveLetter = \'", installArguments.OnFlashDrive.Name.AsSpan(0, 2), "\'"));
-                    foreach (ManagementObject vi in searcher.Get())
+                    foreach (ManagementObject vi in searcher.Get().Cast<ManagementObject>())
                     {
                         vi.InvokeMethod("Format", new object[]
                         {
-                                "FAT32",
-                                true,
-                                8192,
-                                installArguments.OnFlashDrive.VolumeLabel ?? "bootable",
-                                false
+                            "FAT32",
+                            true,
+                            8192,
+                            installArguments.OnFlashDrive.VolumeLabel ?? "bootable",
+                            false
                         });
                     }
 
@@ -215,10 +217,10 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 
             // Moving binaries (loader and tools) to "refind" directory on ESP
             methods.MoveResourceBinaries(
-                BinArchiveDir, // BinArchiveDir
-                EfiBootDir,    // RefindInstallationDir
-                Arch,          // Arch
-                true);         // USB
+                BinArchiveDir,                 // BinArchiveDir
+                EfiBootDir,                    // RefindInstallationDir
+                installArguments.Architecture, // Arch
+                true);                         // USB
 
             // Installing formaliztion theme
             string? formalizationThemePath = default;

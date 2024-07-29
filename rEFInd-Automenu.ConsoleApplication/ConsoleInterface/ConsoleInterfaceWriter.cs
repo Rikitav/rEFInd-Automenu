@@ -6,7 +6,7 @@
 
         public static void WriteHeader(string Message)
         {
-            Console.WriteLine();
+            //Console.WriteLine();
             Console.Write("[ ");
             Console.ForegroundColor = ConsoleColor.Blue;
             Console.Write(Message);
