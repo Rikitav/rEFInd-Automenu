@@ -1,4 +1,5 @@
 ﻿using log4net;
+using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Resources;
@@ -178,6 +179,19 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 
             ConsoleProgram.Interface.Execute("Mounting ESP", commands, (ctrl) =>
             {
+                string EspMountPoint = MountVolBribge.IsEspMounted();
+                if (string.IsNullOrEmpty(EspMountPoint))
+                {
+                    MountVolBribge.MountEsp();
+                    MountVolBribge.DoNotUnmount();
+                }
+                else
+                {
+                    commands.ChangeLabel("Unmounting ESP");
+                    MountVolBribge.FindUnmountEsp();
+                }
+
+                /*
                 // Getting ESP path
                 string EspGuid = EfiPartition.GetFullPath();
                 log.InfoFormat("Efi system partition - {0}", EspGuid);
@@ -229,11 +243,13 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                     log.Info("Successfully unmounted ESP");
                     ctrl.Success("Unmounted");
                 }
+                */
             });
         }
 
         private static class NativeMethods
         {
+            /*
             [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
             public static extern bool SetVolumeMountPointW(string lpszVolumeMountPoint, string lpszVolumeName);
 
@@ -242,6 +258,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 
             [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
             public static extern bool GetVolumeNameForVolumeMountPointW(string lpszVolumeMountPoint, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lpszVolumeName, int cchBufferLength);
+            */
         }
     }
 }

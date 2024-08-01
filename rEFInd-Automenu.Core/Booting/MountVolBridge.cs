@@ -18,7 +18,7 @@ namespace rEFInd_Automenu.Booting
         private static string? _EspMountedPoint = null;
         private static bool _NeedToUnmount = false;
 
-        public static bool ExecuteMountvol(string Params)
+        public static string? ExecuteMountvol(string Params, bool ReadOutput = false)
         {
             using Process MountVolProc = new Process()
             {
@@ -26,6 +26,7 @@ namespace rEFInd_Automenu.Booting
                 {
                     Arguments = Params,
                     CreateNoWindow = true,
+                    RedirectStandardOutput = ReadOutput,
                     WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System)
                 }
             };
@@ -33,7 +34,28 @@ namespace rEFInd_Automenu.Booting
             log.InfoFormat("Mountvol is executing with parameters - {0}", Params);
             MountVolProc.Start();
             MountVolProc.WaitForExit();
-            return MountVolProc.ExitCode == 0;
+
+            if (MountVolProc.ExitCode != 0)
+            {
+                log.ErrorFormat("Failed to execute bcdedit (ExitCode : {0})", MountVolProc.ExitCode);
+                throw new Win32Exception(MountVolProc.ExitCode, "BcdEdit execution failed");
+            }
+
+            if (ReadOutput)
+            {
+                StringBuilder outputBuilder = new StringBuilder();
+                while (!MountVolProc.StandardOutput.EndOfStream)
+                    outputBuilder.AppendLine(MountVolProc.StandardOutput.ReadLine());
+
+                return outputBuilder.ToString();
+            }
+
+            return null;
+        }
+
+        public static void DoNotUnmount()
+        {
+            _NeedToUnmount = false;
         }
 
         public static string GetFreeMountvolLetter()
@@ -76,9 +98,11 @@ namespace rEFInd_Automenu.Booting
             // Getting free mount point letter and mounting
             tmpMountPoint = GetFreeMountvolLetter();
             log.InfoFormat("Mounting ESP to {0}", tmpMountPoint);
-            if (!ExecuteMountvol(tmpMountPoint + " /s"))
+
+            string? mountVol = ExecuteMountvol(tmpMountPoint + " /s", true);
+            if (!Directory.Exists(tmpMountPoint))
             {
-                log.Error("Failed to mount ESP (Mountvol error)");
+                log.ErrorFormat("Failed to mount ESP  - {0}", mountVol);
                 return null;
             }
 
@@ -93,7 +117,20 @@ namespace rEFInd_Automenu.Booting
 
         public static void FindUnmountEsp()
         {
-            throw new NotImplementedException();
+            string? tmpMountPoint = IsEspMounted();
+            if (string.IsNullOrEmpty(tmpMountPoint))
+                return;
+
+            string? mountVol = ExecuteMountvol(tmpMountPoint + " /d", true);
+            if (Directory.Exists(tmpMountPoint))
+            {
+                log.ErrorFormat("Failed to unmount ESP  - {0}", mountVol);
+                //return;
+            }
+            else
+            {
+                log.Info("ESP unmounted successfully");
+            }
         }
 
         public static void UnmountEsp()
@@ -114,9 +151,10 @@ namespace rEFInd_Automenu.Booting
                 return;
             }
 
-            if (!ExecuteMountvol(_EspMountedPoint + " /d"))
+            string? mountVol = ExecuteMountvol(_EspMountedPoint + " /d", true);
+            if (Directory.Exists(_EspMountedPoint))
             {
-                log.WarnFormat("Failed to unmount ESP", _EspMountedPoint);
+                log.ErrorFormat("Failed to unmount ESP  - {0}", mountVol);
                 //return;
             }
             else
