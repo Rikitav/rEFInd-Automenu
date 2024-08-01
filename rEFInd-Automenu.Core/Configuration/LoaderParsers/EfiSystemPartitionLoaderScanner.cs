@@ -25,7 +25,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
         public IEnumerable<MenuEntryInfo> Parse(EnvironmentArchitecture Arch)
         {
             log.Info("Started ESP loaders parsing");
-            DirectoryInfo ESP = EfiPartition.GetDirectoryInfo();
+            DirectoryInfo ESP = EspFinder.EspDirectory;
             if (!ESP.TryGrantAccessControl())
             {
                 log.Fatal("Failed to access ESP");

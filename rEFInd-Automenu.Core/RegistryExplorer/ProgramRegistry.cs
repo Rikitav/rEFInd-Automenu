@@ -78,5 +78,23 @@ namespace rEFInd_Automenu.RedistryExplorer
                 return KeyValue == 1;
             }
         }
+
+        public static bool PreferMountvolEspSearch
+        {
+            get
+            {
+                log.InfoFormat("Getting {0} registry key", nameof(PreferMountvolEspSearch));
+                object? value = Branch.GetValue(nameof(PreferMountvolEspSearch), NotFoundValue);
+                if (value == NotFoundValue)
+                {
+                    log.ErrorFormat("Failed to get {0} registry key", nameof(PreferMountvolEspSearch));
+                    return false;
+                }
+
+                int KeyValue = ((int?)value) ?? 0;
+                log.ErrorFormat("{0} registry key value equals {1}", nameof(PreferMountvolEspSearch), KeyValue == 1);
+                return KeyValue == 1;
+            }
+        }
     }
 }

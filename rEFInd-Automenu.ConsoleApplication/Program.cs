@@ -13,7 +13,6 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
-using Windows.Data.Xml.Dom;
 
 namespace rEFInd_Automenu.ConsoleApplication
 {
@@ -105,9 +104,10 @@ namespace rEFInd_Automenu.ConsoleApplication
 
             if (parserResult.Errors.Any())
             {
+                Logger.Error("Arguments was not parsed");
                 //ConsoleInterfaceWriter.WriteWarning(ParseErrorsWriter.ToString());
                 WriteHelp(parserResult);
-                return;
+                Environment.Exit(1);
             }
 
             switch (args.ElementAt(0).ToLower())
@@ -121,7 +121,7 @@ namespace rEFInd_Automenu.ConsoleApplication
                             if (!ValidMainArgumentsCount(info, args))
                             {
                                 ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind install --help\" for details.");
-                                return;
+                                Environment.Exit(1);
                             }
 
                             InstallArgumentsWorker.Execute(info);
@@ -138,7 +138,7 @@ namespace rEFInd_Automenu.ConsoleApplication
                             if (!ValidMainArgumentsCount(info, args))
                             {
                                 ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind instance --help\" for details.");
-                                return;
+                                Environment.Exit(1);
                             }
 
                             InstanceArgumentsWorker.Execute(info);
@@ -155,7 +155,7 @@ namespace rEFInd_Automenu.ConsoleApplication
                             if (!ValidMainArgumentsCount(info, args))
                             {
                                 ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind get --help\" for details.");
-                                return;
+                                Environment.Exit(1);
                             }
 
                             GetArgumentsWorker.Execute(info);
@@ -163,6 +163,8 @@ namespace rEFInd_Automenu.ConsoleApplication
                         break;
                     }
             }
+
+            Environment.Exit(0);
         }
 
         private static void AfterControllerError(object sender, TaskShellEventArgs args)
@@ -179,6 +181,7 @@ namespace rEFInd_Automenu.ConsoleApplication
 
         private static void ProcessExit(object? sender, EventArgs args)
         {
+            MountVolBribge.UnmountEsp();
             ProgramRegistry.Branch.Close();
         }
 
@@ -217,8 +220,8 @@ namespace rEFInd_Automenu.ConsoleApplication
             Help.Heading = string.Empty;
             Help.AddEnumValuesToHelpText = true;
 
-            Console.WriteLine();
-            ConsoleInterfaceWriter.WriteWarning(Help.ToString());
+            string HelpString = Help.ToString();
+            ConsoleInterfaceWriter.WriteWarning("\n" + HelpString.TrimStart('\n', '\r'));
         }
 
         private static void LogArguments(object ArgumentsInfo)

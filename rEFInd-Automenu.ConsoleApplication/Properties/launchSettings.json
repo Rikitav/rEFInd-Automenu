@@ -2,7 +2,6 @@
   "profiles": {
     "rEFInd-Automenu.ConsoleApplication": {
       "commandName": "Project",
-      "commandLineArgs": "instance --regenconf",
       "remoteDebugEnabled": false
     }
   }

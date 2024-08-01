@@ -2,8 +2,8 @@
 using log4net.Config;
 using log4net.Core;
 using rEFInd_Automenu.Booting;
+using rEFInd_Automenu.Resources;
 using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
 using System.Reflection;
@@ -13,8 +13,8 @@ namespace rEFInd_Automenu.Logging
 {
     public static class CoreLogging
     {
-        public static string LogsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "rEFInd Automenu", "Logs");
-        private static string _LoggerConfigManifestPath = typeof(CoreLogging).Namespace + "." + "lognet.config";
+        private static readonly string LogsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "rEFInd Automenu", "Logs");
+        private static readonly string _LoggerConfigManifestPath = typeof(CoreLogging).Namespace + "." + "lognet.config";
         private static readonly ILog log = LogManager.GetLogger(typeof(CoreLogging));
 
         public static void InitLogFile()
@@ -24,9 +24,11 @@ namespace rEFInd_Automenu.Logging
             AppDomain.CurrentDomain.ProcessExit += (_, _) => LoggerManager.Shutdown();
 
             // Write log header
-            Assembly CurrentAss = Assembly.GetExecutingAssembly();
-            log.Info("\"rEFInd Automenu " + CurrentAss.GetName().Version + "\" by Rikitav (C) 2024");
-            log.Info("\"rEFInd Boot Manager 0.14.0\"by Roderick W. Smith (C) 2024");
+            Version ProgramVersion = Assembly.GetCallingAssembly().GetName().Version;
+            Version BootManagerVersion = EmbeddedResourceManager.rEFIndBin_VersionInResources;
+            
+            log.Info("\"rEFInd Automenu " + ProgramVersion + "\" by Rikitav (C) 2024");
+            log.Info("\"rEFInd Boot Manager " + BootManagerVersion + "\" by Roderick W. Smith (C) 2024");
             log.InfoFormat("Processor   : {0}", ArchitectureInfo.Current);
             log.InfoFormat("Environment : {0}", NativeMethods.GetParentProcess()?.ProcessName ?? "<UNKNOWN>");
 #if DEBUG

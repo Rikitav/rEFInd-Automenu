@@ -132,8 +132,7 @@ namespace rEFInd_Automenu.Configuration
             ConfigurationInstance.Entries ??= new List<MenuEntryInfo>();
 
             //
-            DirectoryInfo ESP = EfiPartition.GetDirectoryInfo();
-            DirectoryInfo WinBootDir = ESP.GetSubDirectory("EFI\\microsoft\\boot");
+            DirectoryInfo WinBootDir = EspFinder.EspDirectory.GetSubDirectory("EFI\\microsoft\\boot");
 
             // Getting icons location for currrent configuration
             string IconName = Path.Combine(_IconsDirectory, MenuEntryIconsAliases.GetIconName("microsoft"));
