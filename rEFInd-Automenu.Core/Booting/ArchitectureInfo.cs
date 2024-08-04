@@ -63,45 +63,25 @@ namespace rEFInd_Automenu.Booting
         /// </summary>
         /// <param name="Arch"></param>
         /// <returns></returns>
-        public static string GetArchPostfixString(this EnvironmentArchitecture Arch)
+        public static string GetArchPostfixString(this EnvironmentArchitecture Arch) => Arch switch
         {
-            switch (Arch)
-            {
-                case EnvironmentArchitecture.X86:
-                    return "ia32";
-
-                case EnvironmentArchitecture.AMD64:
-                    return "x64";
-
-                case EnvironmentArchitecture.ARM64:
-                    return "aa64";
-
-                default:
-                    return string.Empty;
-            }
-        }
+            EnvironmentArchitecture.X86 => "ia32",
+            EnvironmentArchitecture.AMD64 => "x64",
+            EnvironmentArchitecture.ARM64 => "aa64",
+            _ => string.Empty,
+        };
 
         /// <summary>
         /// Defines a architecture for a given postfix
         /// </summary>
         /// <param name="ArchitecturePostfix"></param>
         /// <returns></returns>
-        public static EnvironmentArchitecture FromPostfix(string ArchitecturePostfix)
+        public static EnvironmentArchitecture FromPostfix(string ArchitecturePostfix) => ArchitecturePostfix.ToLower() switch
         {
-            switch (ArchitecturePostfix.ToLower())
-            {
-                case "ia32":
-                    return EnvironmentArchitecture.X86;
-
-                case "x64":
-                    return EnvironmentArchitecture.AMD64;
-
-                case "aa64":
-                    return EnvironmentArchitecture.ARM64;
-
-                default:
-                    return EnvironmentArchitecture.None;
-            }
-        }
+            "ia32" => EnvironmentArchitecture.X86,
+            "x64" => EnvironmentArchitecture.AMD64,
+            "aa64" => EnvironmentArchitecture.ARM64,
+            _ => EnvironmentArchitecture.None,
+        };
     }
 }

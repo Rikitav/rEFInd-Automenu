@@ -20,8 +20,8 @@ namespace rEFInd_Automenu.Configuration
 
         public RefindConfiguration()
         {
-            //Global = new RefindGlobalConfigurationInfo();
-            //Entries = new List<MenuEntryInfo>();
+            Global = new RefindGlobalConfigurationInfo();
+            Entries = new List<MenuEntryInfo>();
         }
     }
 }

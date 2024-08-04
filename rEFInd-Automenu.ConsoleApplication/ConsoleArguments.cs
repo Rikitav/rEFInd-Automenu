@@ -31,6 +31,9 @@ namespace rEFInd_Automenu.ConsoleApplication
     [Verb("Instance", HelpText = "Working with an instance of rEFInd already installed on your computer")]
     public class InstanceArgumentsInfo
     {
+        [Option('I', "Info", Group = "Instance command", HelpText = "Show known info about currently installed rEFInd instance")]
+        public bool ShowInfo { get; set; }
+
         [Option('R', "Remove", Group = "Instance command", HelpText = "Remove rEFInd from current Computer")]
         public bool RemoveBin { get; set; }
 

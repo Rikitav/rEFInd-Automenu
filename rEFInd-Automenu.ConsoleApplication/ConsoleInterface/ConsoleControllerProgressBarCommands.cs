@@ -1,13 +1,13 @@
 ﻿using log4net;
+using rEFInd_Automenu.RegistryExplorer;
 using Rikitav.Plasma.Controls.Spinners;
-using Rikitav.Plasma.Tasks.Execution;
 
 namespace rEFInd_Automenu.ConsoleApplication.ConsoleInterface
 {
     public class ConsoleControllerProgressBarCommands : IConsoleInterfacenterfaceCommands
     {
-        private static ILog log = LogManager.GetLogger(typeof(ConsoleControllerProgressBarCommands));
-        public static bool LogControllerExecution = false;
+        private static readonly ILog log = LogManager.GetLogger(typeof(ConsoleControllerProgressBarCommands));
+        public static readonly bool LogControllerExecution = ProgramRegistry.LogInterfaceExecution;
 
         private object SyncLockObject = new object();
         private readonly Spinner KernelSpinner = new Spinner()

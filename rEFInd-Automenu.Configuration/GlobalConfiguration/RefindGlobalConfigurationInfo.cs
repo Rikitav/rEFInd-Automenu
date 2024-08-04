@@ -1,6 +1,5 @@
 ﻿using rEFInd_Automenu.Configuration.Serializing;
 
-#pragma warning disable CS8618
 namespace rEFInd_Automenu.Configuration.GlobalConfiguration
 {
     public class RefindGlobalConfigurationInfo

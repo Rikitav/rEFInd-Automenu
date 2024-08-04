@@ -14,7 +14,7 @@ namespace rEFInd_Automenu.Configuration.MenuEntry
         {
             get;
             set;
-        } = null;
+        }
 
         /// <summary>
         /// Sets the volume that's used for subsequent file accesses (by icon and loader, and by implication by initrd if loader follows volume). You pass this token a filesystem's label, a partition's label, or a partition's GUID. A filesystem or partition label is typically displayed under the volume's icon in file managers and rEFInd displays it on its menu at the start of the identifying string for an auto-detected boot loader. If this label isn't unique, the first volume with the specified label is used. The matching is nominally case-insensitive, but on some EFIs it's case-sensitive. If a volume has no label, you can use a partition GUID number. If this option is not set, the volume defaults to the one from which rEFInd launched.
@@ -34,7 +34,7 @@ namespace rEFInd_Automenu.Configuration.MenuEntry
         {
             get;
             set;
-        } = null;
+        }
 
         /// <summary>
         /// Sets the filename for a Linux kernel's initial RAM disk (initrd). This option is useful only when booting a Linux kernel that includes an EFI stub loader, which enables you to boot a kernel without the benefit of a separate boot loader. When booted in this way, though, you must normally pass an initrd filename to the boot loader. You must specify the complete EFI path to the initrd file with this option, as in initrd EFI/linux/initrd-3.8.0.img. You'll also have to use the options line to pass the Linux root filesystem, and perhaps other options (as in options "root=/dev/sda4 ro"). The initial RAM disk file must reside on the same volume as the kernel.

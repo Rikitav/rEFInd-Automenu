@@ -12,7 +12,7 @@ namespace rEFInd_Automenu.Configuration.MenuEntry
         {
             get;
             set;
-        } = null;
+        }
 
         /// <summary>
         /// Sets the filename for the boot loader, as described in Table 2. Note that the loader is read from whatever filesystem is specified by the main stanza's volume option, provided that option precedes the submenu definition.
@@ -22,7 +22,7 @@ namespace rEFInd_Automenu.Configuration.MenuEntry
         {
             get;
             set;
-        } = null;
+        }
 
         /// <summary>
         /// Sets the filename for a Linux kernel's initial RAM disk (initrd), as described in Table 2. If you want to eliminate the initrd specification, you should use this keyword alone, with no options. You might do this because your main entry is for a Linux kernel with EFI stub support and this submenu entry launches ELILO, which sets the initrd in its own configuration file.

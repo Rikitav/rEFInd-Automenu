@@ -1,17 +1,15 @@
 ﻿using log4net;
-using rEFInd_Automenu.RedistryExplorer;
+using rEFInd_Automenu.RegistryExplorer;
 using Rikitav.Plasma.Controls.Spinners;
-using Rikitav.Plasma.Tasks.Execution;
-using System.Diagnostics;
 
 namespace rEFInd_Automenu.ConsoleApplication.ConsoleInterface
 {
     public class ConsoleControllerCommands : IConsoleInterfacenterfaceCommands
     {
-        private static ILog log = LogManager.GetLogger(typeof(ConsoleControllerCommands));
+        private static readonly ILog log = LogManager.GetLogger(typeof(ConsoleControllerCommands));
+        private static readonly bool LogInterfaceResults = ProgramRegistry.LogInterfaceResults;
+        private static readonly bool LogInterfaceExecution = ProgramRegistry.LogInterfaceExecution;
         private object SyncLockObject = new object();
-        private static bool LogInterfaceResults = ProgramRegistry.LogInterfaceResults;
-        private static bool LogInterfaceExecution = ProgramRegistry.LogInterfaceExecution;
 
         private readonly Spinner KernelSpinner = new Spinner()
         {

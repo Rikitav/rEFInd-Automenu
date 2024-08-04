@@ -5,7 +5,6 @@ using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Resources;
 using System;
 using System.Diagnostics;
-using System.IO;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -13,7 +12,7 @@ namespace rEFInd_Automenu.Logging
 {
     public static class CoreLogging
     {
-        private static readonly string LogsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "rEFInd Automenu", "Logs");
+        //private static readonly string LogsDirectory = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "rEFInd Automenu", "Logs");
         private static readonly string _LoggerConfigManifestPath = typeof(CoreLogging).Namespace + "." + "lognet.config";
         private static readonly ILog log = LogManager.GetLogger(typeof(CoreLogging));
 
@@ -24,7 +23,7 @@ namespace rEFInd_Automenu.Logging
             AppDomain.CurrentDomain.ProcessExit += (_, _) => LoggerManager.Shutdown();
 
             // Write log header
-            Version ProgramVersion = Assembly.GetCallingAssembly().GetName().Version;
+            Version ProgramVersion = Assembly.GetCallingAssembly().GetName().Version ?? new Version(0, 0);
             Version BootManagerVersion = EmbeddedResourceManager.rEFIndBin_VersionInResources;
             
             log.Info("\"rEFInd Automenu " + ProgramVersion + "\" by Rikitav (C) 2024");

@@ -3,15 +3,12 @@ using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Resources;
-using Rikitav.IO.ExtensibleFirmware.SystemPartition;
-using System.Runtime.InteropServices;
-using System.Text;
 
 namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 {
     public class GetArgumentsWorker
     {
-        private static ILog log = LogManager.GetLogger(typeof(GetArgumentsWorker));
+        private static readonly ILog log = LogManager.GetLogger(typeof(GetArgumentsWorker));
 
         public static void Execute(GetArgumentsInfo argumentsInfo)
         {
@@ -179,7 +176,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 
             ConsoleProgram.Interface.Execute("Mounting ESP", commands, (ctrl) =>
             {
-                string EspMountPoint = MountVolBribge.IsEspMounted();
+                string? EspMountPoint = MountVolBribge.IsEspMounted();
                 if (string.IsNullOrEmpty(EspMountPoint))
                 {
                     MountVolBribge.MountEsp();
@@ -190,75 +187,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                     commands.ChangeLabel("Unmounting ESP");
                     MountVolBribge.FindUnmountEsp();
                 }
-
-                /*
-                // Getting ESP path
-                string EspGuid = EfiPartition.GetFullPath();
-                log.InfoFormat("Efi system partition - {0}", EspGuid);
-
-                // Starting
-                log.Info("Mounting EFI System Partition");
-                if (NativeMethods.SetVolumeMountPointW("S:\\", EspGuid))
-                {
-                    log.Info("Successfully mounted ESP to S:\\");
-                    ctrl.Success("Mounted");
-                }
-
-                // Failed to mount
-                int lastError = Marshal.GetLastWin32Error();
-                log.Info("Error was occured at volume point mounting");
-
-                if (lastError != 0x91) // ERROR_DIR_NOT_EMPTY
-                {
-                    // Unknown error
-                    log.ErrorFormat("Failed to mount EFI system partition. Win32 error {0}", lastError);
-                    ctrl.Error("Failed to mount EFI system partition");
-                }
-
-                // Drive already have volume name 
-                log.Info("LastError was equal to ERROR_DIR_NOT_EMPTY. Already have link");
-
-                // Trying to get VolumeName for mounted S:\
-                StringBuilder GuidBuilder = new StringBuilder(50);
-                if (!NativeMethods.GetVolumeNameForVolumeMountPointW("S:\\", GuidBuilder, GuidBuilder.Capacity))
-                {
-                    // Failed get VolumeName
-                    lastError = Marshal.GetLastWin32Error();
-                    log.ErrorFormat("Failed to get volume GUID for mount point S:\\. Win32 error {0}", lastError);
-                    ctrl.Error("Failed to mount EFI system partition.");
-                }
-
-                // Comparing ESP guid and S:\ guid
-                if (EspGuid != GuidBuilder.ToString())
-                {
-                    // Not ESP's guid. Fault
-                    log.ErrorFormat("\"S:\\\" drive already have another VolumeName - {0}", GuidBuilder.ToString());
-                    ctrl.Error("S:\\ drive already attached as another partition");
-                }
-                else
-                {
-                    // ESP's guid. Unmounting
-                    commands.ChangeLabel("Unmounting ESP");
-                    NativeMethods.DeleteVolumeMountPointW("S:\\");
-                    log.Info("Successfully unmounted ESP");
-                    ctrl.Success("Unmounted");
-                }
-                */
             });
-        }
-
-        private static class NativeMethods
-        {
-            /*
-            [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-            public static extern bool SetVolumeMountPointW(string lpszVolumeMountPoint, string lpszVolumeName);
-
-            [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-            public static extern bool DeleteVolumeMountPointW(string lpszVolumeMountPoint);
-
-            [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
-            public static extern bool GetVolumeNameForVolumeMountPointW(string lpszVolumeMountPoint, [MarshalAs(UnmanagedType.LPWStr)] StringBuilder lpszVolumeName, int cchBufferLength);
-            */
         }
     }
 }

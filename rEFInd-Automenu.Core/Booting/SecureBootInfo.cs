@@ -1,4 +1,5 @@
 ﻿using log4net;
+using rEFInd_Automenu.Booting;
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;

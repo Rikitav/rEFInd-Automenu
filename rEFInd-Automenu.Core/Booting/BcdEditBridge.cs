@@ -1,6 +1,6 @@
 ﻿using log4net;
 using rEFInd_Automenu.Extensions;
-using rEFInd_Automenu.RedistryExplorer;
+using rEFInd_Automenu.RegistryExplorer;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;

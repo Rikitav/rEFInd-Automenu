@@ -5,7 +5,7 @@ using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.FunctionalWorkers;
 using rEFInd_Automenu.Logging;
-using rEFInd_Automenu.RedistryExplorer;
+using rEFInd_Automenu.RegistryExplorer;
 using rEFInd_Automenu.Resources;
 using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.Plasma.Tasks.Management;

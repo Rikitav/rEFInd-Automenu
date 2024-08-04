@@ -4,6 +4,7 @@ using rEFInd_Automenu.Configuration.MenuEntry;
 using rEFInd_Automenu.Extensions;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
 
 namespace rEFInd_Automenu.Configuration.LoaderParsers
@@ -24,7 +25,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
             }
 
             // FwBootmgr contains bootorder which we are parsing
-            foreach (Match entry in Regex.Matches(EnumData, @"{(\S+)}", RegexOptions.Multiline))
+            foreach (Match entry in Regex.Matches(EnumData, @"{(\S+)}", RegexOptions.Multiline).Cast<Match>())
             {
                 // Parsing values from enumerating each GUID from bootorder
                 if (Guid.TryParse(entry.Groups[1].Value, out _))

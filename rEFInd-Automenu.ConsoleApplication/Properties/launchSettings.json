@@ -2,7 +2,7 @@
   "profiles": {
     "rEFInd-Automenu.ConsoleApplication": {
       "commandName": "Project",
-      "commandLineArgs": "get -s",
+      "commandLineArgs": "instance -i",
       "remoteDebugEnabled": false
     }
   }

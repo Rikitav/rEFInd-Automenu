@@ -47,7 +47,7 @@ namespace rEFInd_Automenu.Extensions
             if (Recursive)
             {
                 foreach (string subDir in Directory.EnumerateDirectories(SourceDirPath))
-                    CopyTo(subDir, Path.Combine(DestinationDirPath, Path.GetDirectoryName(subDir)), true);
+                    CopyTo(subDir, Path.Combine(DestinationDirPath, Path.GetDirectoryName(subDir) ?? string.Empty), true);
             }
 
             return DestinationDir;

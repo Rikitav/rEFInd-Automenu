@@ -5,8 +5,8 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
 {
     public partial class WorkerMethods
     {
-        private static ILog log = LogManager.GetLogger(typeof(WorkerMethods));
-        private IConsoleInterfacenterfaceCommands commands;
+        private static readonly ILog log = LogManager.GetLogger(typeof(WorkerMethods));
+        private readonly IConsoleInterfacenterfaceCommands commands;
 
         public WorkerMethods(IConsoleInterfacenterfaceCommands commands)
         {

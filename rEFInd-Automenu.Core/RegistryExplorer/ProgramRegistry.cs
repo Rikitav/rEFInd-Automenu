@@ -4,7 +4,7 @@ using rEFInd_Automenu.Booting;
 using System;
 
 #pragma warning disable CA1416
-namespace rEFInd_Automenu.RedistryExplorer
+namespace rEFInd_Automenu.RegistryExplorer
 {
     public class ProgramRegistry
     {

@@ -1,6 +1,6 @@
 ﻿using log4net;
 using rEFInd_Automenu.Extensions;
-using rEFInd_Automenu.RedistryExplorer;
+using rEFInd_Automenu.RegistryExplorer;
 using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System;
