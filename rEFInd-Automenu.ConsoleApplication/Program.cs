@@ -96,6 +96,7 @@ namespace rEFInd_Automenu.ConsoleApplication
                 With.AllowMultiInstance = false;
                 With.CaseSensitive = false;
                 With.CaseInsensitiveEnumValues = false;
+                With.AutoVersion = false;
             });
 
             // Parsing command line arguments

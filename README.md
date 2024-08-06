@@ -1,152 +1,35 @@
+## rEFInd Automenu
 
 ![Markdown](https://github.com/Rikitav/rEFInd-Automenu/blob/main/Formalization/banner.png)
-<h3 align="center">rEFInd Automenu is utility designed for installing and configuring the rEFInd boot manager</h1>
+<h3 align="center">A convenient command line tool for installing, updating and managing the rEFInd boot manager on UEFI systems.</h3>
 
-# Features
-* **Installing**<br> rEFInd can be installed on a PC or unpacked onto a flash drive as a fallback loader
-* **Configuration**<br> Automatic creation of a configuration file containing all settings and boot entries of their current UEFI platform
-* **Instance updating**<br> The installed instance can be updated to the latest version without the need to replace anything manually
-* **Formalization**<br> Together with rEFInd you can install a beautiful design theme that can be found on the Internet
-<br>
+### Features
+* **Automatic installation:** rEFInd Automenu will easily install rEFInd on your EFI partition and configure booting.
+* **OS Detection:** All alternative operating systems will be identified and added for boot via rEFInd.
+* **Update rEFInd:** Upgrade to the latest version of rEFInd with one command.
+* **Theme Customization:** Set a theme for your rEFInd to personalize your boot menu.
 
-# Using
-Pass the `--help` param to see available verbs
+### Usage
+
+usage pattern: `refind <command> [<args>]`
 ```
-  Install     Contains options for installing rEFInd on a computer or extracting
-              it to a USB flash drive
+Commands:
 
-  Instance    Working with an instance of rEFInd already installed on your
-              computer
-
+  Install     Contains options for installing rEFInd on a computer or extracting it to a USB flash drive
+  Instance    Working with an instance of rEFInd already installed on your computer
   Get         Options related to obtaining rEFInd resources
 
-  help        Display more information on a specific command.
-
-  version     Display version information.
+use 'refind <command> --help' for more details about the command.
 ```
-<br>
 
-# Installation (Install)
-`Install` verb has the following parameters :
-```
-  --Computer      (Group: Install Destination) Specifies that rEFInd should be
-                  installed on the current computer. High parsing priority
+### Examples
 
-  --FlashDrive    (Group: Install Destination) Specifies that rEFInd should be
-                  installed on removable storage as fallback loader. The
-                  parameter must contain a drive letter (for example "C") or a
-                  path to the root directory (for example "C:\"). Medium parsing
-                  priority
+* Installing rEFInd: `refind install --computer` or on removable drive `refind install --flashdrive <drive_letter>`
+* Update rEFInd: `refind instance --update`
+* Installing the theme: `refind instance --installtheme <theme_directory_path>` or during installation `refind install --computer --theme <theme_directory_path>`
+* Removing rEFInd `refind instance --remove`
 
-  -L, --Latest    (Default: false) Download latest version of rEFInd from
-                  SourceForge.com before installation
+### Requirements and building
 
-  -T, --Theme     Set path to your Theme folder. The parameter must contain the
-                  path to the directory (For example, "C:\rEFInd\Bin"), and
-                  target directory must contain theme configuration file named
-                  "Theme.conf"
-
-  -A, --Arch      (Default: None) Force set installation arcitecture
-                  Permissible values : "AMD64, ARM64, x86"
-
-  -F, --Format    (Default: false)
-
-  -X, --Force     (Default: false) Trying to fix some errors during
-                  installation, such as trying to remove an existing rEFInd
-                  instance on the computer
-
-  --help          Display this help screen.
-
-  --version       Display version information.
-```
-<br>
-
-## Installation on current computer
-To install rEFInd on the current computer, you must specify the `--computer` parameter.
-During installation, there will be
-* unpacked the loader and its accompanying files and directories on the EFI System Partition from the resource archive downloaded from [SourceForge](https://sourceforge.net/projects/refind/) or extracted from the built-in resources
-* Generated rEFInd configuration file containing boot entries for all detected operating systems
-* Changed boot entry {bootmgr} to boot rEFInd
-
-* `-l` `--latest`<br> Indicates that the latest available resource archive from the repository should be downloaded, however, if there is already an archive with the latest version in the local storage, then it will be used
-* `-t` `--theme`<br> Specifies the path to the directory where the compatible rEFInd theme is located. The directory must contain the configuration file "theme.conf"!
-* `-a` `-arch`<br> Specifies the specific processor architecture for which rEFInd should be installed. if this parameter is not specified, the architecture is determined automatically. Valid values `AMD64`, `ARM64`, `x86`
-* `-x` `-force`<br> Indicates that if it detects an already installed rEFInd instance, the program will try to remove it first
-* `-f` `-format`<br> Doesn't matter in this context
-<br>
-
-## Installation on Flash drive
-To install rEFInd on the current computer, you must specify the `--flashdrive` parameter.
-During installation there will be
-* unpacked the loader and its accompanying files and directories onto media from the resource archive downloaded from the [SourceForge](https://sourceforge.net/projects/refind/) or extracted from the built-in resources
-* Generated blank configuration file
-
-* `-l` `--latest`<br> Indicates that the latest available resource archive from the repository should be downloaded, however, if there is already an archive with the latest version in the local storage, then it will be used
-* `-t` `--theme`<br> Specifies the path to the directory where the compatible rEFInd theme is located. The directory must contain the configuration file "theme.conf"!
-* `-a` `-arch`<br> Specifies the specific processor architecture for which rEFInd should be installed. if this parameter is not specified, all presented bootloaders will be installed
-* `-x` `-force`<br> Indicates that if another fallback bootloader is detected on the drive, the program should remove it along with its directory
-* `-f` `-format`<br> If the flash drive has a file system other than FAT32, the program will format it
-<br>
-
-# Instance management (Instance)
-`Instance` verb has the following parameters :
-```
-  -R, --Remove    (Group: Instance command) Remove rEFInd from current Computer
-
-  -U, --Update    (Group: Instance command) If rEFInd already installed on
-                  computer, reinstall rEFInd to newest version and regenerate
-                  config file
-                  Else just install rEFInd with clear configuration
-
-  -C, --Config    (Group: Instance command) If rEFInd already installed on
-                  computer, this parametr programm will open "refind.conf"
-
-  --RegenConf     (Group: Instance command) If your config file was corrupted,
-                  you can regenerate it
-
-  --RegenBoot     (Group: Instance command) If rEFInd won't load and you think
-                  it's because BootMgr has redrawn, you can rewrite it to load
-                  rEFInd again
-
-  --help          Display this help screen.
-
-  --version       Display version information.
-```
-<br>
-
-* `-r` `--remove`<br> Indicates that the program should remove the currently installed instance of rEFInd
-* `-u` `--update`<br> Indicates that the program should rewrite the bootloader and its accompanying directories to the newest ones
-* `-c` `--config`<br> Indicates that the program should open the configuration file of the currently installed rEFInd instance
-* `--tegenconf`<br> Indicates that the program should generate and rewrite a configuration file of the currently installed rEFInd instance
-* `--regenboot`<br> Indicates that the program must rewrite the bootmgr entry to boot rEFInd
-<br>
-
-# Getting objects
-`Get` verb has the following parameters :
-```
-  -E, --Embedded    (Group: Get commands) Extract ZIP archive with rEFInd from
-                    program resources
-
-  -A, --Archive     (Group: Get commands) Downloads the rEFInd archive from
-                    SourceForge. You must specify the archive version (For
-                    example, "0.14.0"), or "latest" to download the latest
-                    version
-
-  -S, --SysPar      (Group: Get commands) Mounts the efi system partition to a
-                    visible explorer, or unmount if its already have mount point
-
-  --help            Display this help screen.
-
-  --version         Display version information.
-```
-<br>
-
-* `-e` `-embedded`<br> Indicates that the program should extract the built-in resource archive
-* `-a` `-archive`<br> Indicates that the program should download the rEFInd resource archive from the SourceForge repository.
-* `-s` `-syspar`<br> Indicates that the program should mount the system EFI partition
-<br>
-
-# Testing and requirements
-> [!IMPORTANT]
-> For work require .NET6.0 desktop runtime<br>
-> Recomended to use Windows 10, because of later versions may work incorectly with GUID's
+* `Windows 10 or later` is recommended for use (but versions up to 7 are supported)
+* `.NET 6.0 Desktop SDK` For utility building

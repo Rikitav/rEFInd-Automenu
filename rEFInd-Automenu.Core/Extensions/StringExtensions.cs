@@ -31,7 +31,7 @@ namespace rEFInd_Automenu.Extensions
                 Value = Value.Insert(0, StartQuotationSymbol.ToString());
 
             if (!Value.EndsWith(EndQuotationSymbol))
-                Value = Value.Insert(Value.Length, StartQuotationSymbol.ToString());
+                Value = Value.Insert(Value.Length, EndQuotationSymbol.ToString());
 
             return Value;
         }

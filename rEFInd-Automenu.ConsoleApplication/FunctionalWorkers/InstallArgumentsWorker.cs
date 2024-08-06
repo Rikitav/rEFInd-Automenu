@@ -223,7 +223,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 true);                         // USB
 
             // Installing formaliztion theme
-            string? formalizationThemePath = default;
+            string? formalizationThemePath = null;
             if (installArguments.Theme != null)
             {
                 formalizationThemePath = methods.InstallFormalizationThemeDirectory(

@@ -43,6 +43,9 @@ namespace rEFInd_Automenu.ConsoleApplication
         [Option('C', "Config", Group = "Instance command", HelpText = "If rEFInd already installed on computer, this parametr programm will open \"refind.conf\"")]
         public bool OpenConfig { get; set; }
 
+        [Option('C', "InstallTheme", Group = "Instance command", HelpText = "Install formalization theme for current instance. The parameter must contain the path to the directory (For example, \"C:\\rEFInd\\Bin\"), and target directory must contain theme configuration file named \"Theme.conf\"")]
+        public DirectoryInfo? InstallTheme { get; set; }
+
         [Option("RegenConf", Group = "Instance command", HelpText = "If your config file was corrupted, you can regenerate it")]
         public bool RegenConf { get; set; }
 

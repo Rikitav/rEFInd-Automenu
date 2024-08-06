@@ -41,6 +41,12 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 return;
             }
 
+            if (argumentsInfo.InstallTheme != null)
+            {
+                InstallFormalizationTheme(argumentsInfo);
+                return;
+            }
+
             if (argumentsInfo.RegenBoot)
             {
                 RegenerateBootEntry();
@@ -52,6 +58,88 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 RegenerateConfigFile();
                 return;
             }
+        }
+
+        public static void InstallFormalizationTheme(InstanceArgumentsInfo argumentsInfo)
+        {
+            // Setting commands
+            object SyncLockObject = new object();
+            ConsoleControllerCommands commands = ConsoleProgram.GetControllerCommands<ConsoleControllerCommands>(SyncLockObject);
+            WorkerMethods methods = new WorkerMethods(commands);
+
+            // Trying getting ddestination directory access
+            DirectoryInfo EspRefindDir = methods.CheckInstanceExisting();
+
+            // Removing theme if exist
+            if (EspRefindDir.GetSubDirectory("theme").Exists)
+            {
+                log.Warn("Theme directory is already exist. Directory will be deleted");
+                EspRefindDir.GetSubDirectory("theme").Delete(true);
+                log.Info("OLD Theme directory was deleted");
+            }
+
+            // Installing formaliztion theme
+            methods.InstallFormalizationThemeDirectory(
+                argumentsInfo.InstallTheme, // ThemeDir
+                EspRefindDir);              // RefindInstallationDir
+
+            // Correcting config file to have\add 'include' keyword
+            ConsoleProgram.Interface.Execute("Config correction", commands, (ctrl) =>
+            {
+                // Getting lines
+                string configFilePath = Path.Combine(EspRefindDir.FullName, "refind.conf");
+                string[] lines = File.ReadAllLines(configFilePath);
+
+                // Keyword position info
+                int KeywordLineIndex = -1;
+                bool KeywordFinded = false;
+
+                // Searching for keyword existing
+                log.Info("Searching for \"include\" keyword for theme installation");
+                for (int i = 0; i < lines.Length; i++)
+                {
+                    // Reading
+                    string? configLine = lines[i];
+                    if (string.IsNullOrEmpty(configLine))
+                        continue;
+
+                    // Checking if line already have needed format
+                    if (configLine.Equals("include theme/theme.conf", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        log.Info("Keyword finded and already have needed format");
+                        ctrl.Success("Finded");
+                    }
+
+                    // Checking if keyword exist
+                    if (configLine.StartsWith("include", StringComparison.CurrentCultureIgnoreCase))
+                    {
+                        log.Info("Keyword finded");
+                        KeywordLineIndex = i;
+                        KeywordFinded = true;
+                        break;
+                    }
+                }
+
+                if (!KeywordFinded | KeywordLineIndex < 0)
+                {
+                    // Adding keyword
+                    log.Warn("Keyword wasn't finded, adding one");
+                    List<string> linesList = lines.ToList();
+                    linesList.Insert(0, "include theme/theme.conf");
+
+                    File.WriteAllLines(configFilePath, linesList);
+                    ctrl.Success("Added");
+                }
+                else
+                {
+                    // Changing keyword value
+                    log.Info("Changing keyword value");
+                    lines[KeywordLineIndex] = "include theme/theme.conf";
+
+                    File.WriteAllLines(configFilePath, lines);
+                    ctrl.Success("Changed");
+                }
+            });
         }
 
         private static void ShowInstanceInfo()
