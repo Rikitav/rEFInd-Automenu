@@ -17,42 +17,91 @@ namespace rEFInd_Automenu.Booting
         public const string RefindBootloaderTag = "custom:0x72666e64";
 
         /// <summary>
+        /// Runs the BcdEdit program with the specified parameters
+        /// </summary>
+        /// <param name="Params"></param>
+        /// <param name="ReadOutput"></param>
+        /// <returns></returns>
+        /// <exception cref="InvalidOperationException"></exception>
+        /// <exception cref="Win32Exception"></exception>
+        public static string? ExecuteBcdedit(string Params, bool ReadOutput = false)
+        {
+            using Process BcdEditProc = new Process()
+            {
+                StartInfo = new ProcessStartInfo("bcdedit.exe")
+                {
+                    Arguments = Params,
+                    CreateNoWindow = true,
+                    RedirectStandardOutput = ReadOutput,
+                    WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System)
+                }
+            };
+
+            log.InfoFormat("Bcdedit is executing with parameters - {0}", Params);
+            BcdEditProc.Start();
+            BcdEditProc.WaitForExit();
+
+            if (BcdEditProc.ExitCode != 0)
+            {
+                log.ErrorFormat("Failed to execute bcdedit (ExitCode : {0})", BcdEditProc.ExitCode);
+                throw new Win32Exception(BcdEditProc.ExitCode, "BcdEdit execution failed");
+            }
+
+            if (ReadOutput)
+            {
+                StringBuilder outputBuilder = new StringBuilder();
+                while (!BcdEditProc.StandardOutput.EndOfStream)
+                    outputBuilder.AppendLine(BcdEditProc.StandardOutput.ReadLine());
+
+                return outputBuilder.ToString();
+            }
+
+            return null;
+        }
+        
+        /// <summary>
+        /// Setts given boot option as first in boot order in FwBootmgr
+        /// </summary>
+        /// <param name="BootOptName"></param>
+        public static void SetBootOrderFirst(string BootOptName)
+        {
+            log.InfoFormat("Setting {0} BootEntry as first on FwBootmMgr boot order", BootOptName);
+            ExecuteBcdedit("/set {fwbootmgr} displayOrder " + BootOptName.Quotation('{', '}') + " /addfirst", false);
+            log.Info("Boot order changed successfully");
+        }
+
+        /// <summary>
         /// Rewrites the path and description values ​​of the {bootmgr} boot entry to the specified ones
         /// </summary>
         /// <param name="Name"></param>
         /// <param name="TargetPath"></param>
-        public static void SetBootMgr(string Name, string TargetPath)
+        public static void SetBootOptionPath(string BootOptName, string Name, string TargetPath)
         {
-            log.InfoFormat("Setting bootmgr loader info. Description - {0}, Path - {1}", Name, TargetPath);
-            ExecuteBcdedit("/set {bootmgr} description " + Name.Quotation('\"'));
-            ExecuteBcdedit("/set {bootmgr} path " + TargetPath.Quotation('\"'));
-            //ExecuteBcdedit(string.Join(' ', "/set", "{bootmgr}", RefindBootloaderTag, "1"));
+            log.InfoFormat("Setting bootmgr loader info. BootOpt - {0} Description - {1}, Path - {2}", BootOptName, Name, TargetPath);
+
+            // Setting boot option loader path
+            ExecuteBcdedit(string.Join(' ',
+                "/set",                          // Setter command
+                BootOptName.Quotation('{', '}'), // boot option name
+                "path",                          // property name
+                TargetPath.Quotation('\"')));    // property value
+
+            // Setting boot option description (entry name)
+            ExecuteBcdedit(string.Join(' ',
+                "/set",                          // Setter command
+                BootOptName.Quotation('{', '}'), // boot option name
+                "description",                   // property name
+                Name.Quotation('\"')));          // property value
+
+            // Setting boot option enum-tag
+            /*
+            ExecuteBcdedit(string.Join(' ',
+                "/set",                          // Setter command
+                BootOptName.Quotation('{', '}'), // boot option name
+                RefindBootloaderTag,             // property name
+                "1"));
+            */
         }
-
-        /*
-        public static IEnumerable<string> EnumerateFirmwareBootmgr()
-        {
-            string? ExecData = ExecuteBcdedit("/enum {fwbootmgr}", true);
-            if (string.IsNullOrWhiteSpace(ExecData))
-            {
-                log.Error("Failed to enumerate fwbootmgr. Empty bcdedit data");
-                throw new BcdeditException("Failed to enumerate fwbootmgr. Empty bcdedit data");
-            }
-
-            foreach (Match GuidMatch in Regex.Matches(ExecData, @"\{(.+)\}", RegexOptions.Multiline).Cast<Match>())
-            {
-                if (!GuidMatch.Success)
-                    continue;
-
-                string GuidValue = GuidMatch.Groups[1].Value;
-                if (Guid.TryParse(GuidValue, out _))
-                {
-                    log.InfoFormat("Matched fwbootmgr entry {0}", GuidValue);
-                    yield return GuidValue;
-                }
-            }
-        }
-        */
 
         /// <summary>
         /// Searches the registry for an entry about the backup {bootmgr} boot entry
@@ -123,49 +172,6 @@ namespace rEFInd_Automenu.Booting
             ProgramRegistry.BackupedBootmgrIdentificator = new Guid(BackupGuidMatch.Groups[1].Value);
         }
 
-        /// <summary>
-        /// Runs the BcdEdit program with the specified parameters
-        /// </summary>
-        /// <param name="Params"></param>
-        /// <param name="ReadOutput"></param>
-        /// <returns></returns>
-        /// <exception cref="InvalidOperationException"></exception>
-        /// <exception cref="Win32Exception"></exception>
-        public static string? ExecuteBcdedit(string Params, bool ReadOutput = false)
-        {
-            using Process BcdEditProc = new Process()
-            {
-                StartInfo = new ProcessStartInfo("bcdedit.exe")
-                {
-                    Arguments = Params,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = ReadOutput,
-                    WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System)
-                }
-            };
-
-            log.InfoFormat("Bcdedit is executing with parameters - {0}", Params);
-            BcdEditProc.Start();
-            BcdEditProc.WaitForExit();
-
-            if (BcdEditProc.ExitCode != 0)
-            {
-                log.ErrorFormat("Failed to execute bcdedit (ExitCode : {0})", BcdEditProc.ExitCode);
-                throw new Win32Exception(BcdEditProc.ExitCode, "BcdEdit execution failed");
-            }
-
-            if (ReadOutput)
-            {
-                StringBuilder outputBuilder = new StringBuilder();
-                while (!BcdEditProc.StandardOutput.EndOfStream)
-                    outputBuilder.AppendLine(BcdEditProc.StandardOutput.ReadLine());
-
-                return outputBuilder.ToString();
-            }
-
-            return null;
-        }
-
         public class BcdeditException : Exception
         {
             public BcdeditException(string message)
@@ -191,3 +197,29 @@ namespace rEFInd_Automenu.Booting
         }
     }
 }
+
+//I can use this for future releases
+/*
+public static IEnumerable<string> EnumerateFirmwareBootmgr()
+{
+    string? ExecData = ExecuteBcdedit("/enum {fwbootmgr}", true);
+    if (string.IsNullOrWhiteSpace(ExecData))
+    {
+        log.Error("Failed to enumerate fwbootmgr. Empty bcdedit data");
+        throw new BcdeditException("Failed to enumerate fwbootmgr. Empty bcdedit data");
+    }
+
+    foreach (Match GuidMatch in Regex.Matches(ExecData, @"\{(.+)\}", RegexOptions.Multiline).Cast<Match>())
+    {
+        if (!GuidMatch.Success)
+            continue;
+
+        string GuidValue = GuidMatch.Groups[1].Value;
+        if (Guid.TryParse(GuidValue, out _))
+        {
+            log.InfoFormat("Matched fwbootmgr entry {0}", GuidValue);
+            yield return GuidValue;
+        }
+    }
+}
+*/

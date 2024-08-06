@@ -13,7 +13,8 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
 
             // Setting new bootmgr infos for refind booting
             string RelativeLoaderPath = string.Format("EFI\\refind\\refind_{0}.efi", Arch.GetArchPostfixString());
-            BcdEditBridge.SetBootMgr("rEFInd Boot manager", RelativeLoaderPath);
+            BcdEditBridge.SetBootOptionPath("bootmgr", "rEFInd Boot manager", RelativeLoaderPath);
+            BcdEditBridge.SetBootOrderFirst("bootmgr");
         });
 
         public void ConfigureBootmgrBootEntry(string RelativeLoaderPath) => ConsoleProgram.Interface.Execute("Configuring boot entry", commands, (ctrl) =>
@@ -27,7 +28,8 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
             if (!RelativeLoaderPath.StartsWith("EFI"))
                 RelativeLoaderPath = RelativeLoaderPath.Substring(RelativeLoaderPath.IndexOf("EFI"));
 
-            BcdEditBridge.SetBootMgr("rEFInd Boot manager", RelativeLoaderPath);
+            BcdEditBridge.SetBootOptionPath("bootmgr", "rEFInd Boot manager", RelativeLoaderPath);
+            BcdEditBridge.SetBootOrderFirst("bootmgr");
         });
     }
 }

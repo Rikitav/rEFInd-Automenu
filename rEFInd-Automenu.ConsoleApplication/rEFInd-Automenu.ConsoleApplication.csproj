@@ -16,8 +16,8 @@
     <BaseOutputPath>..\bin\Console</BaseOutputPath>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 	<Deterministic>False</Deterministic>
-	<FileVersion>2.3.49.0</FileVersion>
-	<AssemblyVersion>2.3.49.0</AssemblyVersion>
+	<FileVersion>2.3.51.0</FileVersion>
+	<AssemblyVersion>2.3.51.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
