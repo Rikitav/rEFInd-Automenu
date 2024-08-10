@@ -163,6 +163,12 @@ namespace rEFInd_Automenu.ConsoleApplication
                         });
                         break;
                     }
+
+                case "config":
+                    {
+                        // Can be implemented
+                        break;
+                    }
             }
 
             Environment.Exit(0);

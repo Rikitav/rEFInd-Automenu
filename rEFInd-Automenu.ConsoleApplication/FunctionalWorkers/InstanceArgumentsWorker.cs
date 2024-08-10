@@ -152,30 +152,34 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             // Trying getting ddestination directory access
             DirectoryInfo EspRefindDir = methods.CheckInstanceExisting();
 
-            string[] values = new string[3];
+            string[] values = new string[4];
             ConsoleProgram.Interface.Execute("Getting instance information", commands, (ctrl) =>
             {
+                // Getting efi system partition path
+                values[0] = EspFinder.EspDirectory.FullName;
+
                 // Getting loader version
                 RefindInstanceInfo? instanceInfo = RefindInstanceInfo.Read(EspRefindDir.FullName);
-                values[0] = instanceInfo == null
+                values[1] = instanceInfo == null
                     ? "<NULL>" // null value
                     : instanceInfo.Value.LoaderVersion.ToString();
 
                 // Getting formalization theme existing
                 bool themeExisting = EspRefindDir.GetSubDirectory("theme").Exists;
-                values[1] = themeExisting.ToString();
+                values[2] = themeExisting.ToString();
 
                 // Getting loader architecture
                 string loaderFileName = EspRefindDir.EnumerateFiles("refind_*.efi").First().Name;
-                values[2] = new EfiExecutableInfo("refind", loaderFileName).Architecture.ToString();
+                values[3] = new EfiExecutableInfo("refind", loaderFileName).Architecture.ToString();
             });
 
             Console.WriteLine();
             ConsoleInterfaceWriter.MessageOffset = "[ INFO ] Loader architecture".Length;
 
-            ConsoleInterfaceWriter.WriteInformation("Loader version", values[0]);
-            ConsoleInterfaceWriter.WriteInformation("Theme existing", values[1]);
-            ConsoleInterfaceWriter.WriteInformation("Loader architecture", values[2]);
+            ConsoleInterfaceWriter.WriteInformation("ESP path", values[0]);
+            ConsoleInterfaceWriter.WriteInformation("Loader version", values[1]);
+            ConsoleInterfaceWriter.WriteInformation("Theme existing", values[2]);
+            ConsoleInterfaceWriter.WriteInformation("Loader architecture", values[3]);
 
             ConsoleInterfaceWriter.ResetOffset();
         }
