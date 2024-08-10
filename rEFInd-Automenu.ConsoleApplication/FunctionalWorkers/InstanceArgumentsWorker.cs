@@ -2,6 +2,7 @@
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Configuration;
 using rEFInd_Automenu.Configuration.LoaderParsers;
+using rEFInd_Automenu.Configuration.Parsing;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Extensions;
@@ -67,78 +68,54 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             ConsoleControllerCommands commands = ConsoleProgram.GetControllerCommands<ConsoleControllerCommands>(SyncLockObject);
             WorkerMethods methods = new WorkerMethods(commands);
 
+            if (argumentsInfo.InstallTheme == null)
+                throw new ArgumentNullException(nameof(argumentsInfo.InstallTheme));
+
             // Trying getting ddestination directory access
             DirectoryInfo EspRefindDir = methods.CheckInstanceExisting();
 
             // Removing theme if exist
             if (EspRefindDir.GetSubDirectory("theme").Exists)
             {
-                log.Warn("Theme directory is already exist. Directory will be deleted");
-                EspRefindDir.GetSubDirectory("theme").Delete(true);
-                log.Info("OLD Theme directory was deleted");
+                ConsoleProgram.Interface.Execute("Removing old theme", commands, (ctrl) =>
+                {
+                    try
+                    {
+                        log.Warn("Theme directory is already exist. Directory will be deleted");
+                        EspRefindDir.GetSubDirectory("theme").Delete(true);
+                        log.Info("OLD Theme directory was deleted");
+                    }
+                    catch (Exception exc)
+                    {
+                        log.Error("Failed to delete old formalization theme directory", exc);
+                        ctrl.Error("Failed to delete old formalization theme directory");
+                    }
+                });
             }
 
             // Installing formaliztion theme
             methods.InstallFormalizationThemeDirectory(
-                argumentsInfo.InstallTheme, // ThemeDir
+                argumentsInfo.InstallTheme, // ThemeDir, it CAN'T be null
                 EspRefindDir);              // RefindInstallationDir
 
             // Correcting config file to have\add 'include' keyword
             ConsoleProgram.Interface.Execute("Config correction", commands, (ctrl) =>
             {
-                // Getting lines
+                // Getting config file path
                 string configFilePath = Path.Combine(EspRefindDir.FullName, "refind.conf");
-                string[] lines = File.ReadAllLines(configFilePath);
 
-                // Keyword position info
-                int KeywordLineIndex = -1;
-                bool KeywordFinded = false;
+                // Parsing configuration information from file
+                log.Info("Parsing config file");
+                RefindConfiguration conf = ConfigurationFileParser.FromFile(configFilePath);
 
-                // Searching for keyword existing
-                log.Info("Searching for \"include\" keyword for theme installation");
-                for (int i = 0; i < lines.Length; i++)
-                {
-                    // Reading
-                    string? configLine = lines[i];
-                    if (string.IsNullOrEmpty(configLine))
-                        continue;
+                // Modifying config
+                log.Info("Modifying configuration information");
+                conf.Global.Include = @"theme/theme.conf";
 
-                    // Checking if line already have needed format
-                    if (configLine.Equals("include theme/theme.conf", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        log.Info("Keyword finded and already have needed format");
-                        ctrl.Success("Finded");
-                    }
-
-                    // Checking if keyword exist
-                    if (configLine.StartsWith("include", StringComparison.CurrentCultureIgnoreCase))
-                    {
-                        log.Info("Keyword finded");
-                        KeywordLineIndex = i;
-                        KeywordFinded = true;
-                        break;
-                    }
-                }
-
-                if (!KeywordFinded | KeywordLineIndex < 0)
-                {
-                    // Adding keyword
-                    log.Warn("Keyword wasn't finded, adding one");
-                    List<string> linesList = lines.ToList();
-                    linesList.Insert(0, "include theme/theme.conf");
-
-                    File.WriteAllLines(configFilePath, linesList);
-                    ctrl.Success("Added");
-                }
-                else
-                {
-                    // Changing keyword value
-                    log.Info("Changing keyword value");
-                    lines[KeywordLineIndex] = "include theme/theme.conf";
-
-                    File.WriteAllLines(configFilePath, lines);
-                    ctrl.Success("Changed");
-                }
+                // Writing updated config file
+                log.Info("Writing updated configuration to file");
+                ConfigurationFileBuilder confBuilder = new ConfigurationFileBuilder(conf, EspRefindDir.FullName);
+                confBuilder.WriteConfigurationToFile("refind.conf");
             });
         }
 
