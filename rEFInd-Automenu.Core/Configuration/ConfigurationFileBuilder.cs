@@ -16,27 +16,32 @@ namespace rEFInd_Automenu.Configuration
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(ConfigurationFileBuilder));
 
+        // Settings
         private readonly string? _FormalizationThemePath;
         private readonly string _InstallationDirectory;
-
-        public RefindConfiguration ConfigurationInstance { get; private set; }
-
         private readonly string _IconsDirectory;
 
+        // Factory instance
+        public RefindConfiguration ConfigurationInstance { get; private set; }
+
         public ConfigurationFileBuilder(string installationDirectory)
+            : this(new RefindConfiguration(), installationDirectory) { }
+
+        public ConfigurationFileBuilder(string installationDirectory, string? formalizationThemePath)
+            : this(new RefindConfiguration(), installationDirectory, formalizationThemePath) { }
+
+        public ConfigurationFileBuilder(RefindConfiguration configuration, string installationDirectory)
         {
             _InstallationDirectory = installationDirectory ?? throw new ArgumentNullException(nameof(installationDirectory));
-            ConfigurationInstance = new RefindConfiguration();
-
+            ConfigurationInstance = configuration;
             _IconsDirectory = Path.Combine(_InstallationDirectory, "icons");
         }
 
-        public ConfigurationFileBuilder(string installationDirectory, string? formalizationThemePath)
+        public ConfigurationFileBuilder(RefindConfiguration configuration, string installationDirectory, string? formalizationThemePath)
         {
             _InstallationDirectory = installationDirectory ?? throw new ArgumentNullException(nameof(installationDirectory));
             _FormalizationThemePath = formalizationThemePath;
-            ConfigurationInstance = new RefindConfiguration();
-
+            ConfigurationInstance = configuration;
             _IconsDirectory = !string.IsNullOrEmpty(_FormalizationThemePath)
                 ? Path.Combine(_FormalizationThemePath, "icons")
                 : Path.Combine(_InstallationDirectory, "icons");

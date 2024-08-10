@@ -31,7 +31,7 @@ namespace rEFInd_Automenu.ConsoleApplication
     [Verb("Instance", HelpText = "Working with an instance of rEFInd already installed on your computer")]
     public class InstanceArgumentsInfo
     {
-        [Option('I', "Info", Group = "Instance command", HelpText = "Show known info about currently installed rEFInd instance")]
+        [Option('I', "ShowInfo", Group = "Instance command", HelpText = "Show known info about currently installed rEFInd instance")]
         public bool ShowInfo { get; set; }
 
         [Option('R', "Remove", Group = "Instance command", HelpText = "Remove rEFInd from current Computer")]
@@ -40,10 +40,10 @@ namespace rEFInd_Automenu.ConsoleApplication
         [Option('U', "Update", Group = "Instance command", HelpText = "If rEFInd already installed on computer, reinstall rEFInd to newest version and regenerate config file\nElse just install rEFInd with clear configuration")]
         public bool UpdateBin { get; set; }
 
-        [Option('C', "Config", Group = "Instance command", HelpText = "If rEFInd already installed on computer, this parametr programm will open \"refind.conf\"")]
+        [Option('C', "OpenConfig", Group = "Instance command", HelpText = "If rEFInd already installed on computer, this parametr programm will open \"refind.conf\"")]
         public bool OpenConfig { get; set; }
 
-        [Option('C', "InstallTheme", Group = "Instance command", HelpText = "Install formalization theme for current instance. The parameter must contain the path to the directory (For example, \"C:\\rEFInd\\Bin\"), and target directory must contain theme configuration file named \"Theme.conf\"")]
+        [Option('T', "InstallTheme", Group = "Instance command", HelpText = "Install formalization theme for current instance. The parameter must contain the path to the directory (For example, \"C:\\rEFInd\\Bin\"), and target directory must contain theme configuration file named \"Theme.conf\"")]
         public DirectoryInfo? InstallTheme { get; set; }
 
         [Option("RegenConf", Group = "Instance command", HelpText = "If your config file was corrupted, you can regenerate it")]
