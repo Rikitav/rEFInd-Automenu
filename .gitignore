@@ -31,6 +31,9 @@ bld/
 [Oo]bj/
 [Ll]og/
 [Ll]ogs/
+buildLog_x64.log
+buildLog_x86.log
+buildLog_aa64.log
 
 # Visual Studio 2015/2017 cache/options directory
 .vs/
