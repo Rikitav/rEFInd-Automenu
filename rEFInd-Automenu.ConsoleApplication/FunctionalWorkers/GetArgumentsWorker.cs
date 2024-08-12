@@ -6,13 +6,13 @@ using rEFInd_Automenu.Resources;
 
 namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 {
-    public class GetArgumentsWorker
+    public static class GetArgumentsWorker
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(GetArgumentsWorker));
 
         public static void Execute(GetArgumentsInfo argumentsInfo)
         {
-            // --Resource
+            // --Embedded
             if (argumentsInfo.ExtractResourceArchive)
             {
                 ExtractResourceArchive();
@@ -26,7 +26,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 return;
             }
 
-            // --MountESP
+            // --SysPar
             if (argumentsInfo.MountEsp)
             {
                 MountEsp();

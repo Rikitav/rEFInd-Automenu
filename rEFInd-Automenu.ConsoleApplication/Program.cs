@@ -101,7 +101,7 @@ namespace rEFInd_Automenu.ConsoleApplication
 
             // Parsing command line arguments
             ParserResult<object> parserResult = ArgsParser.ParseArguments<
-                InstallArgumentsInfo, InstanceArgumentsInfo, GetArgumentsInfo>(args);
+                InstallArgumentsInfo, InstanceArgumentsInfo, GetArgumentsInfo, GlobalConfigurationArgumentsInfo, EntriesConfigurationArgumentsInfo>(args);
 
             if (parserResult.Errors.Any())
             {
@@ -114,6 +114,8 @@ namespace rEFInd_Automenu.ConsoleApplication
             switch (args.ElementAt(0).ToLower())
             {
                 case "install":
+                case "setup":
+                case "make":
                     {
                         ConsoleInterfaceWriter.WriteHeader("Installing rEFInd");
                         parserResult.WithParsed<InstallArgumentsInfo>(info =>
@@ -131,6 +133,8 @@ namespace rEFInd_Automenu.ConsoleApplication
                     }
 
                 case "instance":
+                case "present":
+                case "existent":
                     {
                         ConsoleInterfaceWriter.WriteHeader("Touching instance");
                         parserResult.WithParsed<InstanceArgumentsInfo>(info =>
@@ -148,6 +152,8 @@ namespace rEFInd_Automenu.ConsoleApplication
                     }
 
                 case "get":
+                case "obtain":
+                case "gain":
                     {
                         ConsoleInterfaceWriter.WriteHeader("Getting object");
                         parserResult.WithParsed<GetArgumentsInfo>(info =>
@@ -164,9 +170,41 @@ namespace rEFInd_Automenu.ConsoleApplication
                         break;
                     }
 
+                case "configuration":
                 case "config":
+                case "settings":
                     {
-                        // Can be implemented
+                        ConsoleInterfaceWriter.WriteHeader("Changing config");
+                        parserResult.WithParsed<GlobalConfigurationArgumentsInfo>(info =>
+                        {
+                            LogArguments(info);
+                            if (!ValidMainArgumentsCount(info, args))
+                            {
+                                ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind configuration --help\" for details.");
+                                Environment.Exit(1);
+                            }
+
+                            GlobalConfigurationArgumentsWorker.Execute(info);
+                        });
+                        break;
+                    }
+
+                case "menuentry":
+                case "bootoption":
+                case "record":
+                    {
+                        ConsoleInterfaceWriter.WriteHeader("Changing config");
+                        parserResult.WithParsed<EntriesConfigurationArgumentsInfo>(info =>
+                        {
+                            LogArguments(info);
+                            if (!ValidMainArgumentsCount(info, args))
+                            {
+                                ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind configuration --help\" for details.");
+                                Environment.Exit(1);
+                            }
+
+                            EntriesConfigurationArgumentsWorker.Execute(info);
+                        });
                         break;
                     }
             }

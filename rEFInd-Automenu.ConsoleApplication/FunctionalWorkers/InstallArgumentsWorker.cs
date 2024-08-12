@@ -5,23 +5,26 @@ using rEFInd_Automenu.Configuration.LoaderParsers;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Extensions;
+using rEFInd_Automenu.RegistryExplorer;
 using System.Management;
 using System.Runtime.InteropServices;
 
 namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 {
-    public class InstallArgumentsWorker
+    public static class InstallArgumentsWorker
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(InstallArgumentsWorker));
 
         public static void Execute(InstallArgumentsInfo argumentsInfo)
         {
+            // --Computer
             if (argumentsInfo.OnComputer)
             {
                 InstallOnComputer(argumentsInfo);
                 return;
             }
 
+            // --FlashDrive
             if (argumentsInfo.OnFlashDrive != null)
             {
                 InstallToFlashDrive(argumentsInfo);
@@ -94,7 +97,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 configurationBuilder.ConfigureStaticPlatform();
 
                 configurationBuilder.AddWindowsMenuEntry();
-                configurationBuilder.ParseConfigurationEntries(new FwBootmgrLoaderScanner(), Arch);
+                configurationBuilder.ParseConfigurationEntries(ProgramRegistry.PreferLoadersEspScan ? new EfiSystemPartitionLoaderScanner() : new FwBootmgrLoaderScanner(), Arch);
 
                 configurationBuilder.WriteConfigurationToFile("refind.conf");
                 log.Info("Config file succesfully generated");

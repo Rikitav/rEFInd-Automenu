@@ -1,11 +1,43 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 
 namespace rEFInd_Automenu.Configuration.Parsing
 {
     public static class ConfigurationTokenParser
     {
+        /*
+        public static void SetConfigurationInformationValue(string Token, object? Value, object InfoObj, Dictionary<string, PropertyInfo> PropertiesHashMap)
+        {
+            // Getting property associated with token
+            if (!PropertiesHashMap.TryGetValue(Token, out PropertyInfo? AssociatedProp))
+                return;
+
+            // Null prop
+            if (AssociatedProp == null)
+                return;
+
+            // Getting property type
+            Type PropType = AssociatedProp.PropertyType.Name.StartsWith("Nullable")
+                ? AssociatedProp.PropertyType.GenericTypeArguments[0]
+                : AssociatedProp.PropertyType;
+
+            // Parsing
+            if (Value != null)
+            {
+                // Setting value
+                object? LineValueObj = ConvertTokenValue(PropType, Value.ToString());
+                AssociatedProp.SetValue(InfoObj, LineValueObj);
+            }
+            else
+            {
+                // Setting value
+                AssociatedProp.SetValue(InfoObj, null);
+            }
+        }
+        */
+
         public static void ProcessLineOfConfig(string Line, object InfoObj, Dictionary<string, PropertyInfo> PropertiesHashMap)
         {
             // 'No gap' checking
@@ -35,13 +67,8 @@ namespace rEFInd_Automenu.Configuration.Parsing
             if (PropVal != null)
                 return; // Already has value?
 
-            // Getting property type
-            Type PropType = AssociatedProp.PropertyType.Name.StartsWith("Nullable")
-                ? AssociatedProp.PropertyType.GenericTypeArguments[0]
-                : AssociatedProp.PropertyType;
-
             // Parsing
-            object? LineValueObj = ConvertTokenValue(PropType, LineValueString);
+            object? LineValueObj = ConvertTokenValue(AssociatedProp.PropertyType, LineValueString);
             if (LineValueObj == null)
                 return;
 
@@ -49,8 +76,11 @@ namespace rEFInd_Automenu.Configuration.Parsing
             AssociatedProp.SetValue(InfoObj, LineValueObj);
         }
 
-        private static object? ConvertTokenValue(Type ValueType, string StringValue)
+        public static object? ConvertTokenValue(Type ValueType, string StringValue)
         {
+            if (ValueType.Name.StartsWith("Nullable"))
+                ValueType = ValueType.GenericTypeArguments[0];
+
             try
             {
                 if (ValueType.IsEnum)
@@ -65,7 +95,9 @@ namespace rEFInd_Automenu.Configuration.Parsing
                     {
                         "String" => StringValue,
                         "Int32" => int.Parse(StringValue),
-                        "Boolean" => bool.Parse(StringValue),
+                        "Int16" => short.Parse(StringValue),
+                        "Boolean" => ParseBoolean(StringValue),
+                        "Guid" => Guid.Parse(StringValue),
                         "Int32[]" => null, // Because such type have only ONE option and its not for Windows
                         _ => null
                     };
@@ -76,6 +108,20 @@ namespace rEFInd_Automenu.Configuration.Parsing
                 // Value parsing error
                 return null;
             }
+        }
+
+        private static bool? ParseBoolean(string StringValue)
+        {
+            string[] TrueValues = { "true", "on", "1" };
+            string[] FalseValues = { "false", "off", "0" };
+
+            if (TrueValues.Contains(StringValue, StringComparer.CurrentCultureIgnoreCase))
+                return true;
+
+            if (FalseValues.Contains(StringValue, StringComparer.CurrentCultureIgnoreCase))
+                return false;
+
+            return null;
         }
     }
 }

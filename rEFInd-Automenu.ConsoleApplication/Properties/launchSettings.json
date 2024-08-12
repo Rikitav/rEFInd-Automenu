@@ -2,7 +2,7 @@
   "profiles": {
     "rEFInd-Automenu.ConsoleApplication": {
       "commandName": "Project",
-      "commandLineArgs": "instance -i",
+      "commandLineArgs": "config --addmenuentry Arch --loader \"EFI\\arch\\fbx64.efi\" --ostype Linux",
       "remoteDebugEnabled": false
     }
   }

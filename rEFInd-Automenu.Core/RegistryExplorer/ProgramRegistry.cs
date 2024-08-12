@@ -96,5 +96,23 @@ namespace rEFInd_Automenu.RegistryExplorer
                 return KeyValue == 1;
             }
         }
+
+        public static bool PreferLoadersEspScan
+        {
+            get
+            {
+                log.InfoFormat("Getting {0} registry key", nameof(PreferLoadersEspScan));
+                object? value = Branch.GetValue(nameof(PreferLoadersEspScan), NotFoundValue);
+                if (value == NotFoundValue)
+                {
+                    log.ErrorFormat("Failed to get {0} registry key", nameof(PreferLoadersEspScan));
+                    return false;
+                }
+
+                int KeyValue = ((int?)value) ?? 0;
+                log.ErrorFormat("{0} registry key value equals {1}", nameof(PreferLoadersEspScan), KeyValue == 1);
+                return KeyValue == 1;
+            }
+        }
     }
 }
