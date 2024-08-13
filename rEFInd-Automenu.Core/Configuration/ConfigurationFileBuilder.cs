@@ -4,7 +4,6 @@ using rEFInd_Automenu.Configuration.GlobalConfiguration;
 using rEFInd_Automenu.Configuration.MenuEntry;
 using rEFInd_Automenu.Configuration.Serializing;
 using rEFInd_Automenu.Extensions;
-using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System;
 using System.Collections.Generic;
 using System.IO;

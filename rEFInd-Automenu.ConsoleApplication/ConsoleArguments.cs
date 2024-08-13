@@ -1,5 +1,4 @@
 ﻿using CommandLine;
-using CommandLine.Text;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Configuration.MenuEntry;
 
@@ -95,6 +94,9 @@ namespace rEFInd_Automenu.ConsoleApplication
 
         [Option('E', "Edit", Group = "Entry commands", HelpText = "Action. Changes MenuEntry values ​​such as Loader or Volume. The argument takes the name of the MenuEntry that needs to be changed. Note: You must specify one or more parameters from the value argument group")]
         public string? EditEntry { get; set; }
+
+        [Option('G', "Get", Group = "Entry commands", HelpText = "Action. Reads from configuration menuentry and prints it. The argument takes the name of the MenuEntry or the keyword \"enum\" to enumerate all entries. Note: You must specify one or more parameters from the value argument group.")]
+        public string? ShowEntry { get; set; }
 
         [Option("EntryName", HelpText = "Argument-Value. Boot entry name")]
         public string? MenuEntrySetEntryName { get; set; }

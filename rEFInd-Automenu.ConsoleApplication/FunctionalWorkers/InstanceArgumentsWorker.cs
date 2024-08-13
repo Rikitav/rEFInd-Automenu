@@ -160,10 +160,10 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             Console.WriteLine();
             ConsoleInterfaceWriter.MessageOffset = "[ INFO ] Loader architecture".Length;
 
-            ConsoleInterfaceWriter.WriteInformation("ESP path", values[0]);
-            ConsoleInterfaceWriter.WriteInformation("Loader version", values[1]);
-            ConsoleInterfaceWriter.WriteInformation("Theme existing", values[2]);
-            ConsoleInterfaceWriter.WriteInformation("Loader architecture", values[3]);
+            ConsoleInterfaceWriter.WriteInformation("ESP path", " - " + values[0]);
+            ConsoleInterfaceWriter.WriteInformation("Loader version", " - " + values[1]);
+            ConsoleInterfaceWriter.WriteInformation("Theme existing", " - " + values[2]);
+            ConsoleInterfaceWriter.WriteInformation("Loader architecture", " - " + values[3]);
 
             ConsoleInterfaceWriter.ResetOffset();
         }

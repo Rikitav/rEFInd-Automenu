@@ -58,7 +58,7 @@ namespace rEFInd_Automenu.Configuration.Serializing
             }
         }
 
-        private static void BuildConfigGlobalString(TextWriter ConfigBuilder, RefindGlobalConfigurationInfo Global)
+        public static void BuildConfigGlobalString(TextWriter ConfigBuilder, RefindGlobalConfigurationInfo Global)
         {
             // Getting Info's properties
             Type GlobalType = Global.GetType();
@@ -74,7 +74,7 @@ namespace rEFInd_Automenu.Configuration.Serializing
             }
         }
 
-        private static void BuildConfigEntriesString(TextWriter ConfigBuilder, IEnumerable<MenuEntryInfo> Entries)
+        public static void BuildConfigEntriesString(TextWriter ConfigBuilder, IEnumerable<MenuEntryInfo> Entries)
         {
             // Getting Info's properties
             Type EntryType = typeof(MenuEntryInfo);

@@ -3,11 +3,7 @@
     public static class ConsoleInterfaceWriter
     {
         private const int _OriginalMessageOffset = 50;
-        public static int MessageOffset
-        {
-            get;
-            set;
-        } = _OriginalMessageOffset;
+        public static int MessageOffset { get; set; } = _OriginalMessageOffset;
 
         public static void ResetOffset()
         {
@@ -55,7 +51,7 @@
             {
                 Console.SetCursorPosition(MessageOffset, WorkLine);
                 //Console.ForegroundColor = ConsoleColor.Cyan;
-                Console.Write(" - " + Message);
+                Console.Write(Message);
                 Console.ResetColor();
             }
             Console.WriteLine();

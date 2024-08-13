@@ -176,41 +176,5 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 .GetProperties()
                 .FirstOrDefault(p => p.GetCustomAttribute<ConfigFileElementAttribute>().ElementName.Equals(RawName, StringComparison.CurrentCultureIgnoreCase));
         }
-
-        /*
-        private static void EnumerateAndSetMenuEntryValues(MenuEntryInfo entryInfo, ConfigurationArgumentsInfo argumentsInfo)
-        {
-            foreach (PropertyInfo ValProp in argumentsInfo.GetType().GetProperties())
-            {
-                // Getting option attributes
-                OptionAttribute? optionAttribute = ValProp.GetCustomAttribute<OptionAttribute>();
-                if (optionAttribute == null)
-                    continue;
-
-                // Getting if option is associated with main arguments
-                if (!string.IsNullOrEmpty(optionAttribute.Group))
-                    continue;
-
-                // Skipinig 'Value' option
-                if (optionAttribute.LongName.Equals("GlobalValue", StringComparison.CurrentCultureIgnoreCase))
-                    continue;
-
-                // Getting property of info associated with this option
-                PropertyInfo? entryInfoProperty = typeof(MenuEntryInfo).GetProperty(optionAttribute.LongName);
-                if (entryInfoProperty == null)
-                    continue;
-
-                // Getting option's value
-                string? OptionValue = ValProp.GetValue(argumentsInfo)?.ToString();
-                if (string.IsNullOrEmpty(OptionValue))
-                    continue;
-
-                // Setting info's value
-                object? NewInfoValue = OptionValue == "NULL" ? null : ConfigurationTokenParser.ConvertTokenValue(entryInfoProperty.PropertyType, OptionValue);
-                log.InfoFormat("Setting {0} property to {1}", ValProp.Name, NewInfoValue == null ? "<NULL>" : NewInfoValue.ToString());
-                entryInfoProperty.SetValue(entryInfo, NewInfoValue);
-            }
-        }
-        */
     }
 }
