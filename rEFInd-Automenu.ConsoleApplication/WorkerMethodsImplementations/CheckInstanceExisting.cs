@@ -11,15 +11,8 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
             DirectoryInfo ESP = EspFinder.EspDirectory;
             DirectoryInfo EspRefindDir = ESP.GetSubDirectory("EFI\\refind");
 
-            if (!EspRefindDir.Exists)
+            if (!InstanceExist(EspRefindDir))
             {
-                log.Fatal("rEFInd is not installed on this computer");
-                return ctrl.Error("rEFInd is not installed on this computer", true);
-            }
-
-            if (!EspRefindDir.EnumerateFiles("refind_*.efi").Any())
-            {
-                // Should existing
                 log.Fatal("rEFInd is not installed on this computer");
                 return ctrl.Error("rEFInd is not installed on this computer", true);
             }
@@ -34,7 +27,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
             DirectoryInfo EspRefindDir = ESP.GetSubDirectory("EFI\\refind");
 
             // All ok
-            if (!EspRefindDir.Exists)
+            if (!InstanceExist(EspRefindDir))
                 return ctrl.Success(string.Empty, EspRefindDir);
 
             // Shouldnt existing
@@ -64,5 +57,13 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
                 return ctrl.Error("rEFInd is already installed on this computer", true);
             }
         });
+
+        private static bool InstanceExist(DirectoryInfo EspRefindDir)
+        {
+            if (!EspRefindDir.Exists)
+                return false;
+
+            return EspRefindDir.EnumerateFiles("refind_*.efi").Any();
+        }
     }
 }
