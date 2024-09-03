@@ -7,6 +7,7 @@ using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Extensions;
 using rEFInd_Automenu.Installation;
+using rEFInd_Automenu.RegistryExplorer;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System.Diagnostics;
 
@@ -101,7 +102,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             }
 
             // Installing formaliztion theme
-            methods.InstallFormalizationThemeDirectory(
+            string formalizationThemePath = methods.InstallFormalizationThemeDirectory(
                 argumentsInfo.InstallTheme, // ThemeDir, it CAN'T be null
                 EspRefindDir);              // RefindInstallationDir
 
@@ -119,10 +120,13 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 log.Info("Modifying configuration information");
                 conf.Global.Include = @"theme/theme.conf";
 
+                // reassigning menu netry icons
+                ConfigurationFileBuilder configurationBuilder = new ConfigurationFileBuilder(conf, EspRefindDir.FullName, formalizationThemePath);
+                configurationBuilder.AssignLoaderIcons();
+
                 // Writing updated config file
                 log.Info("Writing updated configuration to file");
-                ConfigurationFileBuilder confBuilder = new ConfigurationFileBuilder(conf, EspRefindDir.FullName);
-                confBuilder.WriteConfigurationToFile("refind.conf");
+                configurationBuilder.WriteConfigurationToFile("refind.conf");
             });
         }
 
@@ -227,6 +231,10 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 EspRefindDir.Delete(true);
                 log.Info("rEFInd was removed from this computer");
             });
+
+            // Removing boot option
+            if (!ProgramRegistry.PreferBootmgrBooting)
+                methods.FindDeleteRefindFirmwareLoadOption();
         }
 
         private static void OpenInstanceConfig()
@@ -276,10 +284,37 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 
             // Setting new loader information
             string LoaderPath = EspRefindDir.EnumerateFiles("refind_*.efi").First().FullName;
-            if (File.Exists(LoaderPath))
-                File.Delete(LoaderPath);
+            if (!File.Exists(LoaderPath))
+            {
+                log.Error("rEFInd bootloader not found");
+                ConsoleInterfaceWriter.WriteError(Console.CursorTop, nameof(RegenerateBootEntry), "rEFInd bootloader not found, please reinstall boot manager");
+                return;
+            }
 
-            methods.ConfigureBootmgrBootEntry(LoaderPath.Substring(LoaderPath.IndexOf("EFI")));
+            // Getting Arch
+            EnvironmentArchitecture Arch = ArchitectureInfo.FromPostfix(Path.GetFileNameWithoutExtension(LoaderPath).Substring("refind_".Length));
+            if (Arch == EnvironmentArchitecture.None)
+            {
+                log.Warn("Could not find out the bootloader architecture");
+                ConsoleInterfaceWriter.WriteError(Console.CursorTop, nameof(RegenerateBootEntry), "Could not find out the bootloader architecture");
+                return;
+            }
+
+            // Configuring boot loader for rEFInd boot manager
+            if (!ProgramRegistry.PreferBootmgrBooting)
+            {
+                // Creating rEFInd boot option
+                methods.CreateRefindFirmwareLoadOption(
+                    false, // overrideExisting
+                    true,  // addFirst
+                    Arch); // Arch
+            }
+            else
+            {
+                // Configuring bootmagr to loading rEFInd
+                methods.ConfigureBootmgrBootEntry(
+                    Arch); // Arch
+            }
         }
 
         private static void RegenerateConfigFile()
@@ -313,6 +348,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 // Configuring menu entries
                 configurationBuilder.AddWindowsMenuEntry();
                 configurationBuilder.ParseConfigurationEntries(new FwBootmgrLoaderScanner(), ArchitectureInfo.Current);
+                configurationBuilder.AssignLoaderIcons();
 
                 // Writing
                 configurationBuilder.WriteConfigurationToFile(EfiConfFile);

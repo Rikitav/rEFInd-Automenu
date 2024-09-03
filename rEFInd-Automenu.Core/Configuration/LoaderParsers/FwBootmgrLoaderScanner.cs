@@ -31,6 +31,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
                 if (Guid.TryParse(entry.Groups[1].Value, out _))
                 {
                     // No null
+                    log.InfoFormat("Parsing {0} entry", entry.Groups[1].Value);
                     MenuEntryInfo? info = ParseMenuEntry(entry.Value);
                     if (info == null)
                         continue;

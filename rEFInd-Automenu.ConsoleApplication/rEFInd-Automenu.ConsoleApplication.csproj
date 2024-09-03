@@ -16,8 +16,8 @@
     <BaseOutputPath>..\bin\Console</BaseOutputPath>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 	<Deterministic>False</Deterministic>
-	<FileVersion>2.6.103.0</FileVersion>
-	<AssemblyVersion>2.6.103.0</AssemblyVersion>
+	<FileVersion>2.6.114.0</FileVersion>
+	<AssemblyVersion>2.6.114.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -72,6 +72,12 @@
     </Reference>
     <Reference Include="Rikitav.IO.ExtensibleFirmware">
       <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.dll</HintPath>
+    </Reference>
+    <Reference Include="Rikitav.IO.ExtensibleFirmware.BootService">
+      <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.BootService.dll</HintPath>
+    </Reference>
+    <Reference Include="Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols">
+      <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols.dll</HintPath>
     </Reference>
   </ItemGroup>
 

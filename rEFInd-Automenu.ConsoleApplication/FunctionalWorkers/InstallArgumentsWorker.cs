@@ -97,15 +97,28 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 configurationBuilder.ConfigureStaticPlatform();
 
                 configurationBuilder.AddWindowsMenuEntry();
-                configurationBuilder.ParseConfigurationEntries(ProgramRegistry.PreferLoadersEspScan ? new EfiSystemPartitionLoaderScanner() : new FwBootmgrLoaderScanner(), Arch);
+                configurationBuilder.ParseConfigurationEntries(GetScanner(), Arch); // ProgramRegistry.PreferLoadersEspScan ? new EfiSystemPartitionLoaderScanner() : new FwBootmgrLoaderScanner()
+                configurationBuilder.AssignLoaderIcons();
 
                 configurationBuilder.WriteConfigurationToFile("refind.conf");
                 log.Info("Config file succesfully generated");
             });
 
-            // Configuring bootmagr to loading rEFInd
-            methods.ConfigureBootmgrBootEntry(
-                Arch); // Arch
+            // Configuring boot loader for rEFInd boot manager
+            if (!ProgramRegistry.PreferBootmgrBooting)
+            {
+                // Creating rEFInd boot option
+                methods.CreateRefindFirmwareLoadOption(
+                    false, // vverrideExisting
+                    true,  // addFirst
+                    Arch); // Arch
+            }
+            else
+            {
+                // Configuring bootmagr to loading rEFInd
+                methods.ConfigureBootmgrBootEntry(
+                    Arch); // Arch
+            }
         }
 
         private static void InstallToFlashDrive(InstallArgumentsInfo installArguments)
@@ -243,5 +256,14 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
                 log.Info("Config file succesfully generated");
             });
         }
+
+        private static ILoadersScanner GetScanner() => ProgramRegistry.LoaderScannerType switch
+        {
+            LoaderScannerType.NvramLoadOptionReader => new FirmwareLoadOptionsScanner(),
+            LoaderScannerType.EspDirectoryEnumerator => new EfiSystemPartitionLoaderScanner(),
+            LoaderScannerType.FwBootmgrRecordParser => new FwBootmgrLoaderScanner(),
+            LoaderScannerType.Undetermined => new FirmwareLoadOptionsScanner(),
+            _ => new FirmwareLoadOptionsScanner()
+        };
     }
 }

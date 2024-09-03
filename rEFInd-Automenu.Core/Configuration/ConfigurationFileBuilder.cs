@@ -117,6 +117,15 @@ namespace rEFInd_Automenu.Configuration
             // Parsing entries
             foreach (MenuEntryInfo menuEntry in loadersScanner.Parse(Arch))
             {
+                log.InfoFormat("Added new MenuEntryInfo - \"{0}\", \"{1}\", \"{2}\"", menuEntry.EntryName, menuEntry.Loader, menuEntry.Icon ?? "noIcon");
+                ConfigurationInstance.Entries.Add(menuEntry);
+            }
+        }
+
+        public void AssignLoaderIcons()
+        {
+            foreach (MenuEntryInfo menuEntry in ConfigurationInstance.Entries)
+            {
                 // fetching loader root directory and getting icon
                 string LoaderRootName = menuEntry.Loader.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries)[1];
                 string IconName = Path.Combine(_IconsDirectory, MenuEntryIconsAliases.GetIconName(LoaderRootName.ToLower()));
@@ -124,9 +133,6 @@ namespace rEFInd_Automenu.Configuration
                 // assigning icon
                 if (File.Exists(IconName))
                     menuEntry.Icon = IconName.Substring(IconName.IndexOf("EFI") - 1);
-
-                log.InfoFormat("Added new MenuEntryInfo - \"{0}\", \"{1}\", \"{2}\"", menuEntry.EntryName, menuEntry.Loader, menuEntry.Icon ?? "noIcon");
-                ConfigurationInstance.Entries.Add(menuEntry);
             }
         }
 

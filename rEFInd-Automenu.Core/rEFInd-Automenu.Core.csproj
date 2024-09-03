@@ -32,6 +32,12 @@
     <Reference Include="Rikitav.IO.ExtensibleFirmware">
       <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.dll</HintPath>
     </Reference>
+    <Reference Include="Rikitav.IO.ExtensibleFirmware.BootService">
+      <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.BootService.dll</HintPath>
+    </Reference>
+    <Reference Include="Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols">
+      <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>
