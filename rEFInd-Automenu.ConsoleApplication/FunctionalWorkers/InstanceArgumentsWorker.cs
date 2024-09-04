@@ -234,7 +234,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
 
             // Removing boot option
             if (!ProgramRegistry.PreferBootmgrBooting)
-                methods.FindDeleteRefindFirmwareLoadOption();
+                methods.DeleteRefindFirmwareLoadOption();
         }
 
         private static void OpenInstanceConfig()
