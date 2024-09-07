@@ -174,7 +174,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
         {
             return InfoType
                 .GetProperties()
-                .FirstOrDefault(p => p.GetCustomAttribute<ConfigFileElementAttribute>().ElementName.Equals(RawName, StringComparison.CurrentCultureIgnoreCase));
+                .FirstOrDefault(p => p.GetCustomAttribute<ConfigFileElementAttribute>()?.ElementName.Equals(RawName, StringComparison.CurrentCultureIgnoreCase) ?? false);
         }
     }
 }

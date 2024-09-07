@@ -2,6 +2,7 @@
   "profiles": {
     "rEFInd-Automenu.ConsoleApplication": {
       "commandName": "Project",
+      "commandLineArgs": "install --computer -x -l -t \"C:\\Users\\user\\Desktop\\refind-theme-regular-master\"",
       "remoteDebugEnabled": false
     }
   }

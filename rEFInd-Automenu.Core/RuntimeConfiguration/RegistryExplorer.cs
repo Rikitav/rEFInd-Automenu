@@ -43,6 +43,7 @@ namespace rEFInd_Automenu.RuntimeConfiguration
             }
         }
 
+        /*
         public static bool LogInterfaceExecution
         {
             get
@@ -163,13 +164,6 @@ namespace rEFInd_Automenu.RuntimeConfiguration
                 return LoaderScannerType.Undetermined;
             }
         }
-    }
-
-    public enum LoaderScannerType
-    {
-        Undetermined,
-        EspDirectoryEnumerator,
-        FwBootmgrRecordParser,
-        NvramLoadOptionReader
+        */
     }
 }

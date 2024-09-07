@@ -7,7 +7,7 @@ namespace rEFInd_Automenu.ConsoleApplication.ConsoleInterface
     public class ConsoleControllerProgressBarCommands : IConsoleInterfacenterfaceCommands
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(ConsoleControllerProgressBarCommands));
-        public static readonly bool LogControllerExecution = RegistryExplorer.LogInterfaceExecution;
+        public static readonly bool LogControllerExecution = ProgramConfiguration.Instance.LogInterfaceExecution;
 
         private object SyncLockObject = new object();
         private readonly Spinner KernelSpinner = new Spinner()

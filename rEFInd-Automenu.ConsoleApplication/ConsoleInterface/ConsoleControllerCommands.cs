@@ -7,8 +7,8 @@ namespace rEFInd_Automenu.ConsoleApplication.ConsoleInterface
     public class ConsoleControllerCommands : IConsoleInterfacenterfaceCommands
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(ConsoleControllerCommands));
-        private static readonly bool LogInterfaceResults = RegistryExplorer.LogInterfaceResults;
-        private static readonly bool LogInterfaceExecution = RegistryExplorer.LogInterfaceExecution;
+        private static readonly bool LogInterfaceResults = ProgramConfiguration.Instance.LogInterfaceResults;
+        private static readonly bool LogInterfaceExecution = ProgramConfiguration.Instance.LogInterfaceExecution;
         private object SyncLockObject = new object();
 
         private readonly Spinner KernelSpinner = new Spinner()

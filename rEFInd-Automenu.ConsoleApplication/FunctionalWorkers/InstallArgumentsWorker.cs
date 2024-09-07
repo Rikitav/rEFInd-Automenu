@@ -105,7 +105,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             });
 
             // Configuring boot loader for rEFInd boot manager
-            if (!RegistryExplorer.PreferBootmgrBooting)
+            if (!ProgramConfiguration.Instance.PreferBootmgrBooting)
             {
                 // Creating rEFInd boot option
                 methods.CreateRefindFirmwareLoadOption(
@@ -257,12 +257,11 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             });
         }
 
-        private static ILoadersScanner GetScanner() => RegistryExplorer.LoaderScannerType switch
+        private static ILoadersScanner GetScanner() => ProgramConfiguration.Instance.LoaderScannerType switch
         {
             LoaderScannerType.NvramLoadOptionReader => new FirmwareLoadOptionsScanner(),
             LoaderScannerType.EspDirectoryEnumerator => new EfiSystemPartitionLoaderScanner(),
             LoaderScannerType.FwBootmgrRecordParser => new FwBootmgrLoaderScanner(),
-            LoaderScannerType.Undetermined => new FirmwareLoadOptionsScanner(),
             _ => new FirmwareLoadOptionsScanner()
         };
     }

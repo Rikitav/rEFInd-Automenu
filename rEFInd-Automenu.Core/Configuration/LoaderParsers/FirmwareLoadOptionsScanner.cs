@@ -31,25 +31,25 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
                 {
                     // Reading variable
                     loadOption = FirmwareBootService.ReadLoadOption<FirmwareApplicationBootOption>(loadOptionIndex);
-
-                    // Null check
-                    if (loadOption == null)
-                    {
-                        log.Error("Null instance of bootOption");
-                        continue;
-                    }
-
-                    // Checking option type
-                    if (!loadOption.IsApplication())
-                    {
-                        log.Error("Not an application option");
-                        continue;
-                    }
                 }
                 catch (Exception exc)
                 {
                     // Exception
                     log.Error("Failed to read option", exc);
+                }
+
+                // Null check
+                if (loadOption == null)
+                {
+                    log.Error("Null instance of bootOption");
+                    continue;
+                }
+
+                // Checking option type
+                if (!loadOption.IsApplication())
+                {
+                    log.Error("Not an application option");
+                    continue;
                 }
 
                 if (loadOption.Description.Contains("windows", StringComparison.CurrentCultureIgnoreCase))

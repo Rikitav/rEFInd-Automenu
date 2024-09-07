@@ -50,7 +50,7 @@ namespace rEFInd_Automenu.Booting
             DirectoryInfo? ESP;
 
             // Desiding which method program should access ESP volume
-            if (Environment.OSVersion.Version.Major <= 6 || RegistryExplorer.PreferMountvolEspSearch)
+            if (Environment.OSVersion.Version.Major <= 6 || ProgramConfiguration.Instance.PreferMountvolEspSearch)
             {
                 // Mounting ESP as logical drive with mount point
                 log.Info("Mounting ESP to check instance");

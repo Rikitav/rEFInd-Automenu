@@ -233,7 +233,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             });
 
             // Removing boot option
-            if (!RegistryExplorer.PreferBootmgrBooting)
+            if (!ProgramConfiguration.Instance.PreferBootmgrBooting)
                 methods.DeleteRefindFirmwareLoadOption();
         }
 
@@ -301,7 +301,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             }
 
             // Configuring boot loader for rEFInd boot manager
-            if (!RegistryExplorer.PreferBootmgrBooting)
+            if (!ProgramConfiguration.Instance.PreferBootmgrBooting)
             {
                 // Creating rEFInd boot option
                 methods.CreateRefindFirmwareLoadOption(

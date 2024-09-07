@@ -16,8 +16,8 @@
     <BaseOutputPath>..\bin\Console</BaseOutputPath>
     <SupportedOSPlatformVersion>7.0</SupportedOSPlatformVersion>
 	<Deterministic>False</Deterministic>
-	<FileVersion>2.13.119.0</FileVersion>
-	<AssemblyVersion>2.13.119.0</AssemblyVersion>
+	<FileVersion>2.8.128.0</FileVersion>
+	<AssemblyVersion>2.8.128.0</AssemblyVersion>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
@@ -46,7 +46,6 @@
     <InheritWinAppVersionFrom>None</InheritWinAppVersionFrom>
     <AssemblyFileVersionSettings>None.IncrementWithResetOnIncrease.None.None</AssemblyFileVersionSettings>
     <AssemblyVersionSettings>None.IncrementWithResetOnIncrease.None.None</AssemblyVersionSettings>
-    <PackageVersionSettings>AssemblyVersion.IncrementWithAutoReset.None</PackageVersionSettings>
   </PropertyGroup>
 
   <ItemGroup>
@@ -79,6 +78,12 @@
     <Reference Include="Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols">
       <HintPath>..\Libraries\Rikitav.IO.ExtensibleFirmware\Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols.dll</HintPath>
     </Reference>
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="refind.cfg">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>
