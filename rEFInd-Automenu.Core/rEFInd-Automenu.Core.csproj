@@ -8,7 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="Logging\lognet.config" />
+    <None Remove="RuntimeLogging\lognet.config" />
     <None Remove="Resources\refind-bin_embedded.zip" />
   </ItemGroup>
 
@@ -41,7 +41,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="Logging\lognet.config" />
+    <EmbeddedResource Include="RuntimeLogging\lognet.config" />
   </ItemGroup>
 
 </Project>

@@ -4,9 +4,9 @@ using log4net;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.FunctionalWorkers;
-using rEFInd_Automenu.Logging;
-using rEFInd_Automenu.RegistryExplorer;
 using rEFInd_Automenu.Resources;
+using rEFInd_Automenu.RuntimeConfiguration;
+using rEFInd_Automenu.RuntimeLogging;
 using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.Plasma.Tasks.Management;
 using System.Reflection;
@@ -46,8 +46,16 @@ namespace rEFInd_Automenu.ConsoleApplication
             AppDomain.CurrentDomain.ProcessExit += ProcessExit;
             Interface.AfterControllerError += AfterControllerError;
 
-            //
-            // Program header
+            /* In case you like those fancy headers...
+            // Sexy letters header
+            Console.WriteLine(@" ______   ______   ______  __   __   __   _____    ");
+            Console.WriteLine(@"/\  == \ /\  ___\ /\  ___\/\ \ /\ '-.\ \ /\  __-.  ");
+            Console.WriteLine(@"\ \  __< \ \  __\ \ \  __\\ \ \\ \ \-.  \\ \ \/\ \ ");
+            Console.WriteLine(@" \ \_\ \_\\ \_____\\ \_\   \ \_\\ \_\\'\_\\ \____- ");
+            Console.WriteLine(@"  \/_/ /_/ \/_____/ \/_/    \/_/ \/_/ \/_/ \/____/ ");
+            */
+
+            // Program and Copyright header
             Version[] TitleVersions = new Version[] { EmbeddedResourceManager.rEFIndBin_VersionInResources, Assembly.GetExecutingAssembly().GetName().Version ?? new Version(2, 0, 0, 0) };
             int MaxVersionLength = TitleVersions.Select(v => v.ToString().Length).Max();
             Console.ForegroundColor = ConsoleColor.White;
@@ -227,7 +235,7 @@ namespace rEFInd_Automenu.ConsoleApplication
         private static void ProcessExit(object? sender, EventArgs args)
         {
             MountVolBribge.UnmountEsp();
-            ProgramRegistry.Branch.Close();
+            RegistryExplorer.Branch.Close();
         }
 
         public static TCommands GetControllerCommands<TCommands>(object? LockHandle = null) where TCommands : IConsoleInterfacenterfaceCommands, new()

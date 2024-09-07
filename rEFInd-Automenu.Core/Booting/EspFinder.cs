@@ -1,6 +1,6 @@
 ﻿using log4net;
 using rEFInd_Automenu.Extensions;
-using rEFInd_Automenu.RegistryExplorer;
+using rEFInd_Automenu.RuntimeConfiguration;
 using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System;
@@ -50,7 +50,7 @@ namespace rEFInd_Automenu.Booting
             DirectoryInfo? ESP;
 
             // Desiding which method program should access ESP volume
-            if (Environment.OSVersion.Version.Major <= 6 || ProgramRegistry.PreferMountvolEspSearch)
+            if (Environment.OSVersion.Version.Major <= 6 || RegistryExplorer.PreferMountvolEspSearch)
             {
                 // Mounting ESP as logical drive with mount point
                 log.Info("Mounting ESP to check instance");

@@ -1,6 +1,6 @@
 ﻿using log4net;
 using rEFInd_Automenu.Extensions;
-using rEFInd_Automenu.RegistryExplorer;
+using rEFInd_Automenu.RuntimeConfiguration;
 using System;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -113,7 +113,7 @@ namespace rEFInd_Automenu.Booting
             Value = null;
 
             log.Info("Checking the existance of a backup copy of the bootmgr boot entry");
-            Guid? BackupedBootmgrIdentificator = ProgramRegistry.BackupedBootmgrIdentificator;
+            Guid? BackupedBootmgrIdentificator = RegistryExplorer.BackupedBootmgrIdentificator;
 
             if (BackupedBootmgrIdentificator == null)
             {
@@ -124,7 +124,7 @@ namespace rEFInd_Automenu.Booting
             if (BackupedBootmgrIdentificator == Guid.Empty)
             {
                 log.Warn("BootmgrBackupEntryGuid is holding empty GUID");
-                ProgramRegistry.Branch.DeleteValue(nameof(ProgramRegistry.BackupedBootmgrIdentificator));
+                RegistryExplorer.Branch.DeleteValue(nameof(RegistryExplorer.BackupedBootmgrIdentificator));
                 log.Info("BootmgrBackupEntryGuid was deleted");
                 return false;
             }
@@ -169,7 +169,7 @@ namespace rEFInd_Automenu.Booting
 
             log.InfoFormat("Bootmgr was succesfully backuped. Entry identificator - {0}", BackupGuidMatch.Groups[1].Value);
             log.Info("Writing backuped boot entry GUID to registry");
-            ProgramRegistry.BackupedBootmgrIdentificator = new Guid(BackupGuidMatch.Groups[1].Value);
+            RegistryExplorer.BackupedBootmgrIdentificator = new Guid(BackupGuidMatch.Groups[1].Value);
         }
 
         public class BcdeditException : Exception

@@ -5,7 +5,7 @@ using rEFInd_Automenu.Configuration.LoaderParsers;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Extensions;
-using rEFInd_Automenu.RegistryExplorer;
+using rEFInd_Automenu.RuntimeConfiguration;
 using System.Management;
 using System.Runtime.InteropServices;
 
@@ -105,7 +105,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             });
 
             // Configuring boot loader for rEFInd boot manager
-            if (!ProgramRegistry.PreferBootmgrBooting)
+            if (!RegistryExplorer.PreferBootmgrBooting)
             {
                 // Creating rEFInd boot option
                 methods.CreateRefindFirmwareLoadOption(
@@ -257,7 +257,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             });
         }
 
-        private static ILoadersScanner GetScanner() => ProgramRegistry.LoaderScannerType switch
+        private static ILoadersScanner GetScanner() => RegistryExplorer.LoaderScannerType switch
         {
             LoaderScannerType.NvramLoadOptionReader => new FirmwareLoadOptionsScanner(),
             LoaderScannerType.EspDirectoryEnumerator => new EfiSystemPartitionLoaderScanner(),

@@ -4,17 +4,15 @@ using rEFInd_Automenu.Booting;
 using System;
 
 #pragma warning disable CA1416
-namespace rEFInd_Automenu.RegistryExplorer
+namespace rEFInd_Automenu.RuntimeConfiguration
 {
-    public class ProgramRegistry
+    public class RegistryExplorer
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(BcdEditBridge));
-        //public static readonly object NotFoundValue = 0xBAD + 0xC0DE;
         public static readonly RegistryKey Branch = Registry.LocalMachine
             .CreateSubKey("SOFTWARE")
             .CreateSubKey("rEFInd Automenu");
 
-        //*
         public static Guid? BackupedBootmgrIdentificator
         {
             get
@@ -44,7 +42,6 @@ namespace rEFInd_Automenu.RegistryExplorer
                     Branch.SetValue(nameof(BackupedBootmgrIdentificator), value.Value.ToString());
             }
         }
-        //*/
 
         public static bool LogInterfaceExecution
         {

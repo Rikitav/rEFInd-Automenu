@@ -8,7 +8,7 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace rEFInd_Automenu.Logging
+namespace rEFInd_Automenu.RuntimeLogging
 {
     public static class CoreLogging
     {
@@ -23,11 +23,8 @@ namespace rEFInd_Automenu.Logging
             AppDomain.CurrentDomain.ProcessExit += (_, _) => LoggerManager.Shutdown();
 
             // Write log header
-            Version ProgramVersion = Assembly.GetCallingAssembly().GetName().Version ?? new Version(0, 0);
-            Version BootManagerVersion = EmbeddedResourceManager.rEFIndBin_VersionInResources;
-            
-            log.Info("\"rEFInd Automenu " + ProgramVersion + "\" by Rikitav (C) 2024");
-            log.Info("\"rEFInd Boot Manager " + BootManagerVersion + "\" by Roderick W. Smith (C) 2024");
+            log.InfoFormat("\"rEFInd Automenu {0}\" by Rikitav (C) 2024", Assembly.GetCallingAssembly().GetName().Version ?? new Version(0, 0));
+            log.InfoFormat("\"rEFInd Boot Manager {0}\" by Roderick W. Smith (C) 2024", EmbeddedResourceManager.rEFIndBin_VersionInResources);
             log.InfoFormat("Processor   : {0}", ArchitectureInfo.Current);
             log.InfoFormat("Environment : {0}", NativeMethods.GetParentProcess()?.ProcessName ?? "<UNKNOWN>");
 #if DEBUG

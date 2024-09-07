@@ -7,7 +7,7 @@ using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
 using rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations;
 using rEFInd_Automenu.Extensions;
 using rEFInd_Automenu.Installation;
-using rEFInd_Automenu.RegistryExplorer;
+using rEFInd_Automenu.RuntimeConfiguration;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System.Diagnostics;
 
@@ -233,7 +233,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             });
 
             // Removing boot option
-            if (!ProgramRegistry.PreferBootmgrBooting)
+            if (!RegistryExplorer.PreferBootmgrBooting)
                 methods.DeleteRefindFirmwareLoadOption();
         }
 
@@ -301,7 +301,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             }
 
             // Configuring boot loader for rEFInd boot manager
-            if (!ProgramRegistry.PreferBootmgrBooting)
+            if (!RegistryExplorer.PreferBootmgrBooting)
             {
                 // Creating rEFInd boot option
                 methods.CreateRefindFirmwareLoadOption(
