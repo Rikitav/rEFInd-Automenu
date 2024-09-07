@@ -12,6 +12,6 @@ echo Building ARM64_Standalone...
 dotnet publish %projName%\%projName%.csproj /p:PublishProfile=%profilesDir%\FolderProfile_ARM64_Standalone.pubxml > buildLog_aa64.log
 
 echo Archiving...
-7z a -tzip -mx3 %cd%\bin\console\win-arm64-standalone.zip %cd%\bin\console\win-arm64-s\refind.exe > nul
-7z a -tzip -mx3 %cd%\bin\console\win-x64-standalone.zip %cd%\bin\console\win-x64-s\refind.exe > nul
-7z a -tzip -mx3 %cd%\bin\console\win-x86-standalone.zip %cd%\bin\console\win-x86-s\refind.exe > nul
+7z a -tzip -mx3 "%cd%\bin\console\win-x64-standalone.zip" "%cd%\bin\console\win-x64-s\refind.exe" "%cd%\bin\console\win-x64-s\refind.cfg" > nul
+7z a -tzip -mx3 "%cd%\bin\console\win-x86-standalone.zip" "%cd%\bin\console\win-x86-s\refind.exe" "%cd%\bin\console\win-x86-s\refind.cfg" > nul
+7z a -tzip -mx3 "%cd%\bin\console\win-arm64-standalone.zip" "%cd%\bin\console\win-arm64-s\refind.exe" "%cd%\bin\console\win-arm64-s\refind.cfg" > nul
