@@ -305,7 +305,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             {
                 // Creating rEFInd boot option
                 methods.CreateRefindFirmwareLoadOption(
-                    false, // overrideExisting
+                    true,  // overrideExisting
                     true,  // addFirst
                     Arch); // Arch
             }

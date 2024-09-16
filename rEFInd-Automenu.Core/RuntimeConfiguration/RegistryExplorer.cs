@@ -10,8 +10,7 @@ namespace rEFInd_Automenu.RuntimeConfiguration
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(BcdEditBridge));
         public static readonly RegistryKey Branch = Registry.LocalMachine
-            .CreateSubKey("SOFTWARE")
-            .CreateSubKey("rEFInd Automenu");
+            .CreateSubKey(@"SOFTWARE\rEFInd Automenu");
 
         public static Guid? BackupedBootmgrIdentificator
         {
@@ -43,127 +42,33 @@ namespace rEFInd_Automenu.RuntimeConfiguration
             }
         }
 
-        /*
-        public static bool LogInterfaceExecution
+        public static ApplicationTheme ApplicationTheme
         {
             get
             {
-                log.InfoFormat("Getting {0} registry key", nameof(LogInterfaceExecution));
-                object? value = Branch.GetValue(nameof(LogInterfaceExecution));
+                log.InfoFormat("Getting {0} registry key", nameof(ApplicationTheme));
+                object? value = Branch.GetValue(nameof(ApplicationTheme));
 
                 if (value == null)
                 {
-                    log.ErrorFormat("Failed to get {0} registry key. Not found", nameof(LogInterfaceExecution));
-                    return false;
-                }
-
-                if (value is int KeyValue)
-                {
-                    log.ErrorFormat("{0} registry key value equals {1}", nameof(LogInterfaceExecution), KeyValue == 1);
-                    return KeyValue > 0;
-                }
-
-                return false;
-            }
-        }
-
-        public static bool LogInterfaceResults
-        {
-            get
-            {
-                log.InfoFormat("Getting {0} registry key", nameof(LogInterfaceResults));
-                object? value = Branch.GetValue(nameof(LogInterfaceResults));
-
-                if (value == null)
-                {
-                    log.ErrorFormat("Failed to get {0} registry key. Not found", nameof(LogInterfaceResults));
-                    return false;
-                }
-
-                if (value is int KeyValue)
-                {
-                    log.ErrorFormat("{0} registry key value equals {1}", nameof(LogInterfaceResults), KeyValue == 1);
-                    return KeyValue > 0;
-                }
-
-                return false;
-            }
-        }
-
-        public static bool PreferMountvolEspSearch
-        {
-            get
-            {
-                log.InfoFormat("Getting {0} registry key", nameof(PreferMountvolEspSearch));
-                object? value = Branch.GetValue(nameof(PreferMountvolEspSearch));
-
-                if (value == null)
-                {
-                    log.ErrorFormat("Failed to get {0} registry key. Not found", nameof(PreferMountvolEspSearch));
-                    return false;
-                }
-
-                if (value is int KeyValue)
-                {
-                    log.ErrorFormat("{0} registry key value equals {1}", nameof(PreferMountvolEspSearch), KeyValue == 1);
-                    return KeyValue > 0;
-                }
-
-                return false;
-            }
-        }
-
-        public static bool PreferBootmgrBooting
-        {
-            get
-            {
-                log.InfoFormat("Getting {0} registry key", nameof(PreferBootmgrBooting));
-                object? value = Branch.GetValue(nameof(PreferBootmgrBooting));
-
-                if (value == null)
-                {
-                    log.ErrorFormat("Failed to get {0} registry key. Not found", nameof(PreferBootmgrBooting));
-                    return false;
-                }
-
-                if (value is int KeyValue)
-                {
-                    log.ErrorFormat("{0} registry key value equals {1}", nameof(PreferBootmgrBooting), KeyValue == 1);
-                    return KeyValue > 0;
-                }
-
-                return false;
-            }
-        }
-
-        public static LoaderScannerType LoaderScannerType
-        {
-            get
-            {
-                log.InfoFormat("Getting {0} registry key", nameof(LoaderScannerType));
-                object? value = Branch.GetValue(nameof(LoaderScannerType));
-
-                if (value == null)
-                {
-                    log.ErrorFormat("Failed to get {0} registry key. Not found", nameof(LoaderScannerType));
-                    return LoaderScannerType.Undetermined;
+                    log.ErrorFormat("Failed to get {0} registry key. Not found", nameof(ApplicationTheme));
+                    return ApplicationTheme.Auto;
                 }
 
                 if (value is string EnumValue)
                 {
-                    if (!Enum.TryParse(EnumValue, out LoaderScannerType type))
+                    if (!Enum.TryParse(EnumValue, out ApplicationTheme type))
                     {
-                        log.ErrorFormat("Failed to parse value of {0} registry key. Key value : {1}", nameof(LoaderScannerType), EnumValue);
-                        return LoaderScannerType.Undetermined;
+                        log.ErrorFormat("Failed to parse value of {0} registry key. Key value : {1}", nameof(ApplicationTheme), EnumValue);
+                        return ApplicationTheme.Auto;
                     }
 
-                    log.ErrorFormat("{0} registry key value equals {1}", nameof(LoaderScannerType), value);
+                    log.ErrorFormat("{0} registry key value equals {1}", nameof(ApplicationTheme), value);
                     return type;
                 }
 
-                return LoaderScannerType.Undetermined;
+                return ApplicationTheme.Auto;
             }
         }
-        */
     }
 }
