@@ -17,7 +17,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(FirmwareLoadOptionsScanner));
 
-        public IEnumerable<MenuEntryInfo> Parse(EnvironmentArchitecture Arch)
+        public IEnumerable<MenuEntryInfo> Parse(FirmwareExecutableArchitecture Arch)
         {
             // Listing firmware load options
             log.Info("Listing Firmware load options from BootOrder");

@@ -19,8 +19,8 @@ namespace rEFInd_Automenu.ConsoleApplication
         [Option('T', "Theme", HelpText = "Installation option. The theme will be installed along with the loader. The argument takes the path to the directory containing resources and theme config (Example \"D:\\RefindThemes\\Regular\"). Note: The theme must have a \"theme.conf\" file or similar")]
         public DirectoryInfo? Theme { get; set; }
 
-        [Option('A', "Arch", Default = EnvironmentArchitecture.None, HelpText = "Installation option. Instead of automatically detecting the professor's architecture, the specified one will be used, the argument takes the name of the architecture (For example, \"ARM64\"). Possible values: AMD64, X86, ARM64")]
-        public EnvironmentArchitecture Architecture { get; set; }
+        [Option('A', "Arch", Default = FirmwareExecutableArchitecture.None, HelpText = "Installation option. Instead of automatically detecting the professor's architecture, the specified one will be used, the argument takes the name of the architecture (For example, \"ARM64\"). Possible values: AMD64, X86, ARM64")]
+        public FirmwareExecutableArchitecture Architecture { get; set; }
 
         [Option('F', "Format", HelpText = "Installation option. Only applicable during installation on a flash drive. Indicates that the target flash drive must be formatted in FAT32 before installation, if it is different")]
         public bool FormatDrive { get; set; }

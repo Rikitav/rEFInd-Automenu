@@ -12,7 +12,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
 {
     public partial class WorkerMethods
     {
-        public ushort CreateRefindFirmwareLoadOption(bool overrideExisting, bool addFirst, EnvironmentArchitecture Arch) => ConsoleProgram.Interface.ExecuteAndReturn<ushort>("Creating rEFInd boot option", commands, (ctrl) =>
+        public ushort CreateRefindFirmwareLoadOption(bool overrideExisting, bool addFirst, FirmwareExecutableArchitecture Arch) => ConsoleProgram.Interface.ExecuteAndReturn<ushort>("Creating rEFInd boot option", commands, (ctrl) =>
         {
             byte[] optionalData = CreateRefindBootOptionOptionalData();
             log.Info("Creating new boot option for rEFInd boot manager");
@@ -91,7 +91,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
             public FilePathMediaDevicePath FilePathProtocol => (FilePathMediaDevicePath)OptionProtocols[1];
             public byte[] OptionalData => _OptionalData;
 
-            public FirmwareRefindBootOption(EnvironmentArchitecture Arch, byte[] optionalData) : base(LoadOptionAttributes.ACTIVE, "rEFInd Boot manager")
+            public FirmwareRefindBootOption(FirmwareExecutableArchitecture Arch, byte[] optionalData) : base(LoadOptionAttributes.ACTIVE, "rEFInd Boot manager")
             {
                 _OptionalData = optionalData;
                 OptionProtocols = new DevicePathProtocolBase[]

@@ -41,8 +41,8 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             log.Info("Started installation on current computer");
 
             // Setting processor architecture
-            EnvironmentArchitecture Arch = EnvironmentArchitecture.None;
-            if (installArguments.Architecture == EnvironmentArchitecture.None)
+            FirmwareExecutableArchitecture Arch = FirmwareExecutableArchitecture.None;
+            if (installArguments.Architecture == FirmwareExecutableArchitecture.None)
             {
                 // Getting current architecture
                 Arch = ArchitectureInfo.Current;
@@ -133,7 +133,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             log.InfoFormat("Started installation on Flash drive {0}", installArguments.OnFlashDrive.Name);
 
             // Checking force architecture param
-            if (installArguments.Architecture != EnvironmentArchitecture.None)
+            if (installArguments.Architecture != FirmwareExecutableArchitecture.None)
             {
                 // Using a specific architecture
                 log.InfoFormat("Using a specific architecture : {0}", installArguments.Architecture);

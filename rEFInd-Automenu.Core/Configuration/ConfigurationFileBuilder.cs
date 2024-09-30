@@ -108,7 +108,7 @@ namespace rEFInd_Automenu.Configuration
             }
         }
 
-        public void ParseConfigurationEntries(ILoadersScanner loadersScanner, EnvironmentArchitecture Arch)
+        public void ParseConfigurationEntries(ILoadersScanner loadersScanner, FirmwareExecutableArchitecture Arch)
         {
             // Init menu entry list
             log.InfoFormat("Scanning for loaders using {0}", loadersScanner.GetType().Name);

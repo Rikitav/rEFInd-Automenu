@@ -6,6 +6,6 @@ namespace rEFInd_Automenu.Configuration
 {
     public interface ILoadersScanner
     {
-        public IEnumerable<MenuEntryInfo> Parse(EnvironmentArchitecture Arch);
+        public IEnumerable<MenuEntryInfo> Parse(FirmwareExecutableArchitecture Arch);
     }
 }

@@ -22,7 +22,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
             "refind"
         };
 
-        public IEnumerable<MenuEntryInfo> Parse(EnvironmentArchitecture Arch)
+        public IEnumerable<MenuEntryInfo> Parse(FirmwareExecutableArchitecture Arch)
         {
             log.Info("Started ESP loaders parsing");
             DirectoryInfo ESP = EspFinder.EspDirectory;
@@ -94,7 +94,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
             }
         }
 
-        private static string GetLoaderByNickname(EnvironmentArchitecture Arch, string LoaderNickname)
+        private static string GetLoaderByNickname(FirmwareExecutableArchitecture Arch, string LoaderNickname)
         {
             string ArchPostfix = Arch.GetArchPostfixString();
             return LoaderNickname + ArchPostfix + ".efi";

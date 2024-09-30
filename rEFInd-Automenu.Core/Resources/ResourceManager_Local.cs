@@ -38,7 +38,7 @@ namespace rEFInd_Automenu.Resources
 
             // Formatting path and getting his existing
             string VerName = string.Format("refind-bin-{0}.zip", version);
-            return File.Exists(Path.Combine(VersionsDirectory.FullName, VerName));
+            return File.Exists(Path.Combine(VersionsDirectoryPath, VerName));
         }
 
         /// <summary>
@@ -46,7 +46,7 @@ namespace rEFInd_Automenu.Resources
         /// </summary>
         /// <param name="version"></param>
         /// <returns></returns>
-        /// <exception cref="EmptyLocalDatabaseExceptioin"></exception>
+        /// <exception cref="EmptyLocalDatabaseException"></exception>
         /// <exception cref="FileNotFoundException"></exception>
         public static FileStream GetBinArchiveByVersionStreamByVersino(Version version)
         {
@@ -57,7 +57,7 @@ namespace rEFInd_Automenu.Resources
             {
                 // No resource archives
                 log.Error("No locally saved resources");
-                throw new EmptyLocalDatabaseExceptioin();
+                throw new EmptyLocalDatabaseException();
             }
 
             // Formating path for asked resource
@@ -78,7 +78,7 @@ namespace rEFInd_Automenu.Resources
         /// Opening resource archive stream with latest available version on local storage
         /// </summary>
         /// <returns></returns>
-        /// <exception cref="EmptyLocalDatabaseExceptioin"></exception>
+        /// <exception cref="EmptyLocalDatabaseException"></exception>
         /// <exception cref="FileNotFoundException"></exception>
         public static FileStream GetLatestBinArchiveStream()
         {
@@ -87,7 +87,7 @@ namespace rEFInd_Automenu.Resources
             {
                 // No resource archives
                 log.Error("No locally saved resources");
-                throw new EmptyLocalDatabaseExceptioin();
+                throw new EmptyLocalDatabaseException();
             }
 
             // Formating path for latest resource
@@ -176,12 +176,24 @@ namespace rEFInd_Automenu.Resources
             }
         }
 
-        public class EmptyLocalDatabaseExceptioin : Exception
+        public static Version[] GetSavedArchivesVersionsList()
         {
-            public EmptyLocalDatabaseExceptioin()
+            log.Info("Getting a list of locally saved versions of rEFInd");
+            Version[] versions = VersionsDirectory
+                .EnumerateFiles("refind-bin-*.zip")
+                .Select(ArchivePath => Version.Parse(ArchivePath.Name.AsSpan("refind-bin-".Length, ArchivePath.Name.Length - "refind-bin-.zip".Length)))
+                .ToArray();
+
+            log.InfoFormat("Enumerating finished. Locally saved versions : {0}", string.Join<Version>("; ", versions));
+            return versions;
+        }
+
+        public class EmptyLocalDatabaseException : Exception
+        {
+            public EmptyLocalDatabaseException()
                 : base() { }
 
-            public EmptyLocalDatabaseExceptioin(string Message)
+            public EmptyLocalDatabaseException(string Message)
                 : base(Message) { }
         }
     }

@@ -180,7 +180,7 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             WorkerMethods methods = new WorkerMethods(commands);
 
             // Working
-            EnvironmentArchitecture Arch = ArchitectureInfo.Current;
+            FirmwareExecutableArchitecture Arch = ArchitectureInfo.Current;
             log.Info("Updating instance bin (-u flag)");
 
             // Trying getting ddestination directory access
@@ -292,8 +292,8 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             }
 
             // Getting Arch
-            EnvironmentArchitecture Arch = ArchitectureInfo.FromPostfix(Path.GetFileNameWithoutExtension(LoaderPath).Substring("refind_".Length));
-            if (Arch == EnvironmentArchitecture.None)
+            FirmwareExecutableArchitecture Arch = ArchitectureInfo.FromPostfix(Path.GetFileNameWithoutExtension(LoaderPath).Substring("refind_".Length));
+            if (Arch == FirmwareExecutableArchitecture.None)
             {
                 log.Warn("Could not find out the bootloader architecture");
                 ConsoleInterfaceWriter.WriteError(Console.CursorTop, nameof(RegenerateBootEntry), "Could not find out the bootloader architecture");

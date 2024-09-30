@@ -26,7 +26,7 @@ namespace rEFInd_Automenu.Installation
         /// <param name="Arch"></param>
         /// <param name="Overwrite"></param>
         /// <exception cref="FileNotFoundException"></exception>
-        public static void CopyResourceArchive(DirectoryInfo RefindArchiveFolder, DirectoryInfo DestinationFolder, EnvironmentArchitecture Arch, string DestinationLoadersPattern)
+        public static void CopyResourceArchive(DirectoryInfo RefindArchiveFolder, DirectoryInfo DestinationFolder, FirmwareExecutableArchitecture Arch, string DestinationLoadersPattern)
         {
             log.InfoFormat("Started resource archive copying from \"{0}\" to \"{1}\"", RefindArchiveFolder.FullName, DestinationFolder.FullName);
 
@@ -42,9 +42,9 @@ namespace rEFInd_Automenu.Installation
             CopyDirectories(RefindArchiveFolder, DestinationFolder, Arch);
         }
 
-        public static void CopyDirectories(DirectoryInfo ArchiveDir, DirectoryInfo DestinationDir, EnvironmentArchitecture Arch)
+        public static void CopyDirectories(DirectoryInfo ArchiveDir, DirectoryInfo DestinationDir, FirmwareExecutableArchitecture Arch)
         {
-            if (Arch.HasFlag(EnvironmentArchitecture.None))
+            if (Arch.HasFlag(FirmwareExecutableArchitecture.None))
             {
                 foreach (string DirEntry in KnownBinArchiveDirectoryNames)
                 {
@@ -56,9 +56,9 @@ namespace rEFInd_Automenu.Installation
                 }
             }
 
-            foreach (EnvironmentArchitecture EnumFlag in Arch.GetType().GetEnumValues().Cast<EnvironmentArchitecture>())
+            foreach (FirmwareExecutableArchitecture EnumFlag in Arch.GetType().GetEnumValues().Cast<FirmwareExecutableArchitecture>())
             {
-                if (EnumFlag == EnvironmentArchitecture.None || !Arch.HasFlag(EnumFlag))
+                if (EnumFlag == FirmwareExecutableArchitecture.None || !Arch.HasFlag(EnumFlag))
                     continue;
 
                 foreach (string DirEntry in KnownBinArchiveDirectoryNames)
@@ -87,9 +87,9 @@ namespace rEFInd_Automenu.Installation
             }
         }
 
-        public static void CopyLoaders(DirectoryInfo ArchiveDir, DirectoryInfo DestinationDir, EnvironmentArchitecture Arch, string DestinationLoadersPattern)
+        public static void CopyLoaders(DirectoryInfo ArchiveDir, DirectoryInfo DestinationDir, FirmwareExecutableArchitecture Arch, string DestinationLoadersPattern)
         {
-            if (Arch.HasFlag(EnvironmentArchitecture.None))
+            if (Arch.HasFlag(FirmwareExecutableArchitecture.None))
             {
                 foreach (FileInfo loaderFile in ArchiveDir.EnumerateFiles("refind_*.efi"))
                 {
@@ -100,9 +100,9 @@ namespace rEFInd_Automenu.Installation
                 }
             }
 
-            foreach (EnvironmentArchitecture EnumFlag in Arch.GetType().GetEnumValues().Cast<EnvironmentArchitecture>())
+            foreach (FirmwareExecutableArchitecture EnumFlag in Arch.GetType().GetEnumValues().Cast<FirmwareExecutableArchitecture>())
             {
-                if (EnumFlag == EnvironmentArchitecture.None || !Arch.HasFlag(EnumFlag))
+                if (EnumFlag == FirmwareExecutableArchitecture.None || !Arch.HasFlag(EnumFlag))
                     continue;
 
                 string LoaderName = string.Format("refind_{0}.efi", EnumFlag.GetArchPostfixString());

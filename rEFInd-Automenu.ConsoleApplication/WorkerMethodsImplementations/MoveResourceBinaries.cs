@@ -6,7 +6,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
 {
     public partial class WorkerMethods
     {
-        public void MoveResourceBinaries(DirectoryInfo BinArchiveDir, DirectoryInfo RefindInstallationDir, EnvironmentArchitecture Arch, bool Usb) => ConsoleProgram.Interface.Execute("Installing binaries", commands, (ctrl) =>
+        public void MoveResourceBinaries(DirectoryInfo BinArchiveDir, DirectoryInfo RefindInstallationDir, FirmwareExecutableArchitecture Arch, bool Usb) => ConsoleProgram.Interface.Execute("Installing binaries", commands, (ctrl) =>
         {
             // Creating such directory and moving binaries
             log.Info("Copying rEFInd binaries to installation directory");
@@ -25,7 +25,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
             RefindInstanceInfo info = new RefindInstanceInfo(Version.Parse(RefindBinVersion));
             RefindInstanceInfo.Write(info, RefindInstallationDir.FullName);
 
-            ctrl.Success(Arch == EnvironmentArchitecture.None ? "AUTO" : Arch.ToString());
+            ctrl.Success(Arch == FirmwareExecutableArchitecture.None ? "AUTO" : Arch.ToString());
         });
     }
 }

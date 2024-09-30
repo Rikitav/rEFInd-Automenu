@@ -5,26 +5,26 @@ using System.Runtime.InteropServices;
 namespace rEFInd_Automenu.Booting
 {
     [Flags]
-    public enum EnvironmentArchitecture
+    public enum FirmwareExecutableArchitecture
     {
-        None = 2,
-        AMD64 = 4,
-        ARM64 = 8,
-        X86 = 16
+        None = 0,
+        AMD64 = 2,
+        ARM64 = 4,
+        X86 = 8
     }
 
     public static class ArchitectureInfo
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(ArchitectureInfo));
 
-        public static EnvironmentArchitecture Current
+        public static FirmwareExecutableArchitecture Current
         {
             get => RuntimeInformation.OSArchitecture switch
             {
-                Architecture.X86 => EnvironmentArchitecture.X86,
-                Architecture.X64 => EnvironmentArchitecture.AMD64,
-                Architecture.Arm64 => EnvironmentArchitecture.ARM64,
-                _ => EnvironmentArchitecture.None
+                Architecture.X86 => FirmwareExecutableArchitecture.X86,
+                Architecture.X64 => FirmwareExecutableArchitecture.AMD64,
+                Architecture.Arm64 => FirmwareExecutableArchitecture.ARM64,
+                _ => FirmwareExecutableArchitecture.None
             };
         }
 
@@ -32,9 +32,9 @@ namespace rEFInd_Automenu.Booting
         {
             get => Current switch
             {
-                EnvironmentArchitecture.ARM64 => "aa64",
-                EnvironmentArchitecture.AMD64 => "x64",
-                EnvironmentArchitecture.X86 => "ia32",
+                FirmwareExecutableArchitecture.ARM64 => "aa64",
+                FirmwareExecutableArchitecture.AMD64 => "x64",
+                FirmwareExecutableArchitecture.X86 => "ia32",
                 _ => string.Empty
             };
         }
@@ -47,7 +47,7 @@ namespace rEFInd_Automenu.Booting
         public static bool IsCurrentPlatformSupported()
         {
             log.Info("Checking current processor architecture installation capability");
-            if (Current == EnvironmentArchitecture.None)
+            if (Current == FirmwareExecutableArchitecture.None)
             {
                 log.FatalFormat("Current \"{0}\" processor architecture is not supported for rEFInd installation", RuntimeInformation.OSArchitecture);
                 //throw new PlatformNotSupportedException($"{RuntimeInformation.OSArchitecture} Architecture is not supported for installation");
@@ -63,11 +63,11 @@ namespace rEFInd_Automenu.Booting
         /// </summary>
         /// <param name="Arch"></param>
         /// <returns></returns>
-        public static string GetArchPostfixString(this EnvironmentArchitecture Arch) => Arch switch
+        public static string GetArchPostfixString(this FirmwareExecutableArchitecture Arch) => Arch switch
         {
-            EnvironmentArchitecture.X86 => "ia32",
-            EnvironmentArchitecture.AMD64 => "x64",
-            EnvironmentArchitecture.ARM64 => "aa64",
+            FirmwareExecutableArchitecture.X86 => "ia32",
+            FirmwareExecutableArchitecture.AMD64 => "x64",
+            FirmwareExecutableArchitecture.ARM64 => "aa64",
             _ => string.Empty,
         };
 
@@ -76,12 +76,12 @@ namespace rEFInd_Automenu.Booting
         /// </summary>
         /// <param name="ArchitecturePostfix"></param>
         /// <returns></returns>
-        public static EnvironmentArchitecture FromPostfix(string ArchitecturePostfix) => ArchitecturePostfix.ToLower() switch
+        public static FirmwareExecutableArchitecture FromPostfix(string ArchitecturePostfix) => ArchitecturePostfix.ToLower() switch
         {
-            "ia32" => EnvironmentArchitecture.X86,
-            "x64" => EnvironmentArchitecture.AMD64,
-            "aa64" => EnvironmentArchitecture.ARM64,
-            _ => EnvironmentArchitecture.None,
+            "ia32" => FirmwareExecutableArchitecture.X86,
+            "x64" => FirmwareExecutableArchitecture.AMD64,
+            "aa64" => FirmwareExecutableArchitecture.ARM64,
+            _ => FirmwareExecutableArchitecture.None,
         };
     }
 }

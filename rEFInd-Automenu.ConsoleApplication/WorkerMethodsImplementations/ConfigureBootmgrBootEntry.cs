@@ -4,7 +4,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
 {
     public partial class WorkerMethods
     {
-        public void ConfigureBootmgrBootEntry(EnvironmentArchitecture Arch) => ConsoleProgram.Interface.Execute("Configuring boot entry", commands, (ctrl) =>
+        public void ConfigureBootmgrBootEntry(FirmwareExecutableArchitecture Arch) => ConsoleProgram.Interface.Execute("Configuring boot entry", commands, (ctrl) =>
         {
             log.Info("Configuring bootmgr entry for rEFInd loading");
 

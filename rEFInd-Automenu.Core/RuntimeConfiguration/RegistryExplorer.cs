@@ -69,6 +69,12 @@ namespace rEFInd_Automenu.RuntimeConfiguration
 
                 return ApplicationTheme.Auto;
             }
+
+            set
+            {
+                if (Enum.IsDefined<ApplicationTheme>(value))
+                    Branch.SetValue(nameof(ApplicationTheme), value.ToString());
+            }
         }
     }
 }

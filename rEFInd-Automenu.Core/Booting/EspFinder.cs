@@ -13,16 +13,11 @@ namespace rEFInd_Automenu.Booting
     public static class EspFinder
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(EspFinder));
-
         private static DirectoryInfo? _EspDirectory;
+
         public static DirectoryInfo EspDirectory
         {
             get => _EspDirectory ??= InitDirInfo();
-        }
-
-        public static bool UseMountvol
-        {
-            get => Environment.OSVersion.Version.Major <= 6;
         }
 
         private static DirectoryInfo InitDirInfo()
@@ -50,7 +45,7 @@ namespace rEFInd_Automenu.Booting
             DirectoryInfo? ESP;
 
             // Desiding which method program should access ESP volume
-            if (Environment.OSVersion.Version.Major <= 6 || ProgramConfiguration.Instance.PreferMountvolEspSearch)
+            if (Environment.OSVersion.Version >= new Version(6, 2) | ProgramConfiguration.Instance.PreferMountvolEspSearch)
             {
                 // Mounting ESP as logical drive with mount point
                 log.Info("Mounting ESP to check instance");

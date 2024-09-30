@@ -13,7 +13,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(FwBootmgrLoaderScanner));
 
-        public IEnumerable<MenuEntryInfo> Parse(EnvironmentArchitecture Arch)
+        public IEnumerable<MenuEntryInfo> Parse(FirmwareExecutableArchitecture Arch)
         {
             // Getting FwBootmgr data via bcdedit execution
             log.Info("Started FwBootmgr parsing (BcdEdit)");
