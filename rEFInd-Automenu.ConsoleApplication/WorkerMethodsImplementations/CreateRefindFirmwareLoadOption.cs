@@ -6,6 +6,7 @@ using Rikitav.IO.ExtensibleFirmware.BootService.LoadOption;
 using Rikitav.IO.ExtensibleFirmware.BootService.Win32Native;
 using Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
+using System.Linq;
 using System.Text;
 
 namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
@@ -14,10 +15,9 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
     {
         public ushort CreateRefindFirmwareLoadOption(bool overrideExisting, bool addFirst, FirmwareExecutableArchitecture Arch) => ConsoleProgram.Interface.ExecuteAndReturn<ushort>("Creating rEFInd boot option", commands, (ctrl) =>
         {
-            byte[] optionalData = CreateRefindBootOptionOptionalData();
             log.Info("Creating new boot option for rEFInd boot manager");
 
-            if (FindFirmwareRefindBootLoader(optionalData, out ushort loadOptionIndex))
+            if (FindFirmwareRefindBootLoader(out ushort loadOptionIndex))
             {
                 if (!overrideExisting)
                 {
@@ -31,7 +31,7 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
 
                 // Updating existing boot option variable
                 log.InfoFormat("Updating {0} boot option variable", loadOptionIndex);
-                FirmwareBootService.UpdateLoadOption(new FirmwareRefindBootOption(Arch, optionalData), loadOptionIndex);
+                FirmwareBootService.UpdateLoadOption(new FirmwareRefindBootOption(Arch), loadOptionIndex);
                 return ctrl.Success("Updated", loadOptionIndex);
             }
 
@@ -41,18 +41,18 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
 
             // Creating new load option
             log.Info("Creating new boot option variable");
-            ushort newLoadOptoinIndex = FirmwareBootService.CreateLoadOption(new FirmwareRefindBootOption(Arch, optionalData), addFirst);
+            ushort newLoadOptoinIndex = FirmwareBootService.CreateLoadOption(new FirmwareRefindBootOption(Arch), addFirst);
 
             // Success
             log.InfoFormat("New rEFInd boot option was successfully created");
             return ctrl.Success("Created", newLoadOptoinIndex);
         });
 
-        private static bool FindFirmwareRefindBootLoader(byte[] optionalData, out ushort loadOptionIndex)
+        public bool FindFirmwareRefindBootLoader(out ushort loadOptionIndex)
         {
             // Logging data
             log.Info("Search for an existing boot entry");
-            log.InfoFormat("Optional data is : {0}", string.Join(", ", optionalData));
+            log.InfoFormat("Optional data origin is : \"{0}\"", FirmwareRefindBootOption.OptionalDataInstanceOrigin);
 
             // Enumearting existing boot entries
             foreach (ushort loadOption in FirmwareGlobalEnvironment.BootOrder)
@@ -61,13 +61,15 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
                 EFI_LOAD_OPTION checkBootOption = FirmwareBootService.ReadRawLoadOption(loadOption);
                 
                 // Checking
-                if (checkBootOption.OptionalData.SequenceEqual(optionalData))
+                if (checkBootOption.OptionalData.SequenceEqual(FirmwareRefindBootOption.OptionalDataInstance))
                 {
+                    log.InfoFormat("rEFInd Boot option found. option index - {0}", loadOption);
                     loadOptionIndex = loadOption;
                     return true;
                 }
             }
 
+            log.Error("Boot option was not found");
             loadOptionIndex = 0;
             return false;
         }
@@ -75,25 +77,24 @@ namespace rEFInd_Automenu.ConsoleApplication.WorkerMethodsImplementations
         private static void LogFirmwareRefindBootOption(FirmwareRefindBootOption RefindBootOption)
         {
             // Logging option data
-            log.InfoFormat("Option attributes - {0}", RefindBootOption.Attributes);
-            log.InfoFormat("Option description - {0}", RefindBootOption.Description);
-            log.InfoFormat("Option optionalData - {0}", RefindBootOption.OptionalData);
-            log.InfoFormat("Protocol HardDriveMediaDevicePath.GptPartitionSignature - {0}", RefindBootOption.HardDriveProtocol.GptPartitionSignature);
-            log.InfoFormat("Protocol FilePathMediaDevicePath.PathName - {0}", RefindBootOption.FilePathProtocol.PathName);
+            log.InfoFormat("rEFInd load option - attributes - {0}", RefindBootOption.Attributes);
+            log.InfoFormat("rEFInd load option - description - {0}", RefindBootOption.Description);
+            log.InfoFormat("rEFInd load option - optionalData - {0}", string.Join("; ", FirmwareRefindBootOption.OptionalDataInstance));
+            log.InfoFormat("rEFInd load option - HardDriveMediaDevicePath.GptPartitionSignature - {0}", RefindBootOption.HardDriveProtocol);
+            log.InfoFormat("rEFInd load option - FilePathMediaDevicePath.PathName - {0}", RefindBootOption.FilePathProtocol);
         }
-
-        private static byte[] CreateRefindBootOptionOptionalData()
-            => Encoding.Unicode.GetBytes("rEFInd Automenu");
 
         private class FirmwareRefindBootOption : LoadOptionBase
         {
             public HardDriveMediaDevicePath HardDriveProtocol => (HardDriveMediaDevicePath)OptionProtocols[0];
             public FilePathMediaDevicePath FilePathProtocol => (FilePathMediaDevicePath)OptionProtocols[1];
-            public byte[] OptionalData => _OptionalData;
 
-            public FirmwareRefindBootOption(FirmwareExecutableArchitecture Arch, byte[] optionalData) : base(LoadOptionAttributes.ACTIVE, "rEFInd Boot manager")
+            public static string OptionalDataInstanceOrigin = "rEFInd Automenu";
+            public static byte[] OptionalDataInstance = Encoding.Unicode.GetBytes(OptionalDataInstanceOrigin);
+
+            public FirmwareRefindBootOption(FirmwareExecutableArchitecture Arch) : base(LoadOptionAttributes.ACTIVE, "rEFInd Boot manager")
             {
-                _OptionalData = optionalData;
+                _OptionalData = OptionalDataInstance;
                 OptionProtocols = new DevicePathProtocolBase[]
                 {
                     new HardDriveMediaDevicePath(EfiPartition.Identificator),

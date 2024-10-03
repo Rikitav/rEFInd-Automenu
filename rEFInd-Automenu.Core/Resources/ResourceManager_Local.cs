@@ -12,6 +12,7 @@ namespace rEFInd_Automenu.Resources
         public static readonly DirectoryInfo VersionsDirectory = Directory.CreateDirectory(VersionsDirectoryPath);
 
         public static readonly ILog log = LogManager.GetLogger(typeof(LocalResourceManager));
+        public static EventHandler? LocalStorageUpdated;
 
         /// <summary>
         /// Checking for any resource on local storage
@@ -168,6 +169,7 @@ namespace rEFInd_Automenu.Resources
                 using FileStream BinFile = File.Create(BinPath);
                 await BinStream.CopyToAsync(BinFile);
                 log.InfoFormat("Resource archive was succesfully saved", version);
+                LocalStorageUpdated?.Invoke(null, EventArgs.Empty);
             }
             catch (Exception exc)
             {

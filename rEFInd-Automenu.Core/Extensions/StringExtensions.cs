@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Text;
 
 namespace rEFInd_Automenu.Extensions
 {
@@ -9,20 +11,16 @@ namespace rEFInd_Automenu.Extensions
             if (string.IsNullOrWhiteSpace(Value))
                 throw new ArgumentException(nameof(Value) + " was null or white space");
 
-            int LetterPos = 0;
-            if (!char.IsLetter(Value[0]))
-            {
-                while (!char.IsLetter(Value[LetterPos]))
-                {
-                    if (++LetterPos == Value.Length)
-                        return Value;
-                }
-            }
+            char firstLetter = Value.First(c => char.IsLetter(c));
+            int firstIsLetterPos = Value.IndexOf(firstLetter);
 
-            if (char.IsUpper(Value[LetterPos]))
+            StringBuilder builder = new StringBuilder(Value);
+            if (char.IsUpper(Value[firstIsLetterPos + 1]))
                 return Value;
 
-            return Value.Insert(LetterPos, char.ToUpper(Value[LetterPos]).ToString()).Remove(LetterPos + 1, 1);
+            builder.Remove(firstIsLetterPos, 1);
+            builder.Insert(firstIsLetterPos, char.ToUpper(firstLetter));
+            return builder.ToString();
         }
 
         public static string Quotation(this string Value, char StartQuotationSymbol, char EndQuotationSymbol)

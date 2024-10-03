@@ -107,9 +107,15 @@ namespace rEFInd_Automenu.ConsoleApplication.FunctionalWorkers
             // Configuring boot loader for rEFInd boot manager
             if (!ProgramConfiguration.Instance.PreferBootmgrBooting)
             {
+                /*
+                // Deleting old boot option if existing
+                if (installArguments.ForceWork && methods.FindFirmwareRefindBootLoader(out ushort loadOptionIndex))
+                    methods.DeleteRefindFirmwareLoadOption(loadOptionIndex);
+                */
+
                 // Creating rEFInd boot option
                 methods.CreateRefindFirmwareLoadOption(
-                    false, // vverrideExisting
+                    false, // overrideExisting
                     true,  // addFirst
                     Arch); // Arch
             }

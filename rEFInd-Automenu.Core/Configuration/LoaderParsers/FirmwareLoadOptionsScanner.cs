@@ -55,6 +55,9 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
                 if (loadOption.Description.Contains("windows", StringComparison.CurrentCultureIgnoreCase))
                     continue;
 
+                if (loadOption.Description.Contains("refind", StringComparison.CurrentCultureIgnoreCase))
+                    continue;
+
                 // Returning new menu entry
                 yield return new MenuEntryInfo()
                 {
