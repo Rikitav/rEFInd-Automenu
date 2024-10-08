@@ -7,10 +7,10 @@ namespace rEFInd_Automenu.Booting
     [Flags]
     public enum FirmwareExecutableArchitecture
     {
-        None = 0,
-        AMD64 = 2,
-        ARM64 = 4,
-        X86 = 8
+        None = 2,
+        AMD64 = 4,
+        ARM64 = 8,
+        X86 = 16
     }
 
     public static class ArchitectureInfo
