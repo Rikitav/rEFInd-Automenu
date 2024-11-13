@@ -16,10 +16,10 @@ namespace rEFInd_Automenu.ConsoleApplication.ConsoleInterface
             SpinSequence = new string[] { "/", "-", "\\", "|" }
         };
 
-        public readonly ProgressBar KernelProgressBar = new ProgressBar()
+        public readonly ReportProgressBar<long> KernelProgressBar = new ReportProgressBar<long>()
         {
             WorkPattern = "{Percent}% [{Bar}]",
-            WorkingLeftOffset = 30
+            WorkingLeftOffset = 45
         };
 
         public void BeforeExecute(string WorkText)

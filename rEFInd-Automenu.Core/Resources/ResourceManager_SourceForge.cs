@@ -1,4 +1,5 @@
 ﻿using log4net;
+using rEFInd_Automenu.TypesExtensions;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -6,6 +7,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace rEFInd_Automenu.Resources
@@ -93,7 +95,36 @@ namespace rEFInd_Automenu.Resources
 
             string RequestUri = string.Format(@"https://sourceforge.net/projects/refind/files/{0}/refind-bin-{0}.zip/download", version);
             log.InfoFormat("Request URI for downloading - \"{0}\"", RequestUri);
+
             return await Client.GetStreamAsync(RequestUri);
+        }
+
+        public static async Task<Stream> DownloadArchiveByVersionWithProgress(Version version, IProgress<long> progress, Action<long> SetProgressLength)
+        {
+            log.InfoFormat("Downloading rEFInd resource archive from SourceForge of version {0}", version);
+            using HttpClient Client = new HttpClient();
+            Client.Timeout = TimeSpan.FromMinutes(5);
+
+            string RequestUri = string.Format(@"https://sourceforge.net/projects/refind/files/{0}/refind-bin-{0}.zip/download", version);
+            log.InfoFormat("Request URI for downloading - \"{0}\"", RequestUri);
+
+            // Get the http headers first to examine the content length
+            using (var response = await Client.GetAsync(RequestUri, HttpCompletionOption.ResponseHeadersRead))
+            {
+                long contentLength = response.Content.Headers.ContentLength ?? 0;
+                using (Stream download = await response.Content.ReadAsStreamAsync())
+                {
+                    // Convert absolute progress (bytes downloaded) into relative progress (0% - 100%)
+                    SetProgressLength(contentLength);
+
+                    // Use extension method to report progress while downloading
+                    MemoryStream destinationStream = new MemoryStream();
+                    await download.CopyToAsync(destinationStream, 81920, progress);
+                    progress.Report(1);
+
+                    return destinationStream;
+                }
+            }
         }
 
         /// <summary>
@@ -105,8 +136,10 @@ namespace rEFInd_Automenu.Resources
             log.Info("Downloading latest available rEFInd resource archive from SourceForge");
             using HttpClient Client = new HttpClient();
 
-            log.InfoFormat("Request URI for downloading - \"{0}\"", @"https://sourceforge.net/projects/refind/files/latest/download");
-            return await Client.GetStreamAsync(@"https://sourceforge.net/projects/refind/files/latest/download");
+            string RequestUri = @"https://sourceforge.net/projects/refind/files/latest/download";
+            log.InfoFormat("Request URI for downloading - \"{0}\"", RequestUri);
+
+            return await Client.GetStreamAsync(RequestUri);
         }
 
         public static async Task<Version[]> GetVersionsList()

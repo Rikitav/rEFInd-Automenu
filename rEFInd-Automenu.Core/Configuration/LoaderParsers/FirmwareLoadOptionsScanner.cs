@@ -1,21 +1,28 @@
 ﻿using log4net;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Configuration.MenuEntry;
-using rEFInd_Automenu.Extensions;
-using Rikitav.IO.ExtensibleFirmware;
+using rEFInd_Automenu.TypesExtensions;
 using Rikitav.IO.ExtensibleFirmware.BootService;
 using Rikitav.IO.ExtensibleFirmware.BootService.DevicePathProtocols;
 using Rikitav.IO.ExtensibleFirmware.BootService.LoadOption;
-using Rikitav.IO.ExtensibleFirmware.BootService.Win32Native;
+using Rikitav.IO.ExtensibleFirmware.BootService.UefiNative;
 using Rikitav.IO.ExtensibleFirmware.MediaDevicePathProtocols;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace rEFInd_Automenu.Configuration.LoaderParsers
 {
     public class FirmwareLoadOptionsScanner : ILoadersScanner
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(FirmwareLoadOptionsScanner));
+
+        private static readonly string[] _IgnoreLoaders = new string[]
+        {
+            "windows",
+            "refind"
+        };
+
 
         public IEnumerable<MenuEntryInfo> Parse(FirmwareExecutableArchitecture Arch)
         {
@@ -24,12 +31,12 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
 
             foreach (ushort loadOptionIndex in FirmwareBootService.LoadOrder)
             {
-                log.InfoFormat("Reading load option {0}", loadOptionIndex.ToString("X").PadLeft(4, '0'));
                 FirmwareApplicationBootOption? loadOption = null;
 
                 try
                 {
                     // Reading variable
+                    log.InfoFormat("Reading load option {0}", loadOptionIndex.ToString("X").PadLeft(4, '0'));
                     loadOption = FirmwareBootService.ReadLoadOption<FirmwareApplicationBootOption>(loadOptionIndex);
                 }
                 catch (Exception exc)
@@ -52,15 +59,17 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
                     continue;
                 }
 
-                if (loadOption.Description.Contains("windows", StringComparison.CurrentCultureIgnoreCase))
+                // Checking if loader contained in _IgnoreLoaders list
+                if (_IgnoreLoaders.Any(l => loadOption.Description.Contains(l, StringComparison.CurrentCultureIgnoreCase)))
+                {
+                    //log.Error("Not an application option");
                     continue;
-
-                if (loadOption.Description.Contains("refind", StringComparison.CurrentCultureIgnoreCase))
-                    continue;
+                }
 
                 // Returning new menu entry
                 yield return new MenuEntryInfo()
                 {
+                    OSType = OSType.Linux, // Most likely, it will be a linux system, so...
                     EntryName = loadOption.Description.FirstLetterToUpper(),
                     Loader = loadOption.FilePathProtocol.PathName,
                     Volume = loadOption.HardDriveProtocol.GptPartitionSignature
@@ -78,16 +87,9 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
 
             public bool IsApplication()
             {
-                if (OptionProtocols[0] is not HardDriveMediaDevicePath)
-                    return false;
-
-                if (OptionProtocols[1] is not FilePathMediaDevicePath)
-                    return false;
-
-                if (OptionProtocols[2] is not DevicePathProtocolEnd)
-                    return false;
-
-                return true;
+                return OptionProtocols[0] is HardDriveMediaDevicePath
+                    && OptionProtocols[1] is FilePathMediaDevicePath
+                    && OptionProtocols[2] is DevicePathProtocolEnd;
             }
         }
     }

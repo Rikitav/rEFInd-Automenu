@@ -3,6 +3,7 @@ using log4net.Config;
 using log4net.Core;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Resources;
+using rEFInd_Automenu.RuntimeConfiguration;
 using System;
 using System.Diagnostics;
 using System.Reflection;
@@ -18,6 +19,9 @@ namespace rEFInd_Automenu.RuntimeLogging
 
         public static void InitLogFile()
         {
+            if (!ProgramConfiguration.Instance.AllowCreateLogFiles)
+                return;
+
             // Create log file
             XmlConfigurator.Configure(Assembly.GetExecutingAssembly().GetManifestResourceStream(_LoggerConfigManifestPath));
             AppDomain.CurrentDomain.ProcessExit += (_, _) => LoggerManager.Shutdown();

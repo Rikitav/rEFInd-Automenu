@@ -1,5 +1,5 @@
-﻿using System;
-using System.Runtime.InteropServices;
+﻿using rEFInd_Automenu.Win32;
+using System;
 
 namespace rEFInd_Automenu.Resources
 {
@@ -12,7 +12,15 @@ namespace rEFInd_Automenu.Resources
             LocalStorage     // Extract from locally saved bin archive
         }
 
-        public static Method GetVersionedResource(Version TargetVersion)
+        [Flags]
+        public enum Warnings
+        {
+            None = 1,
+            NoInternet = 2,
+            LocalDisallowed = 4
+        }
+
+        public static Method GetMethodForVersion(Version TargetVersion)
         {
             // Requested version is exist on local storage
             if (LocalResourceManager.VersionExists(TargetVersion))
@@ -26,14 +34,23 @@ namespace rEFInd_Automenu.Resources
             return Method.DownloadLatest;
         }
 
-        public static Method GetResource(bool DownloadLatest)
+        public static Method GetMethod(bool DownloadLatest, out Warnings warnings)
         {
+            warnings = Warnings.None;
+            /*
+            if (!ProgramConfiguration.Instance.AllowCreateLocalResource)
+            {
+                warnings = Warnings.LocalDisallowed;
+                return Method.ExtractEmbedded;
+            }
+            */
+
             // Getting latest locally saved rEFInd BinArchive
-            string LocalBinPath = LocalResourceManager.GetLatestBinArchiveFullPath(out Version LocalLatestVerInfo);
+            string LocalBinPath = LocalResourceManager.GetLatestBinArchiveFullPath(out Version? LocalLatestVerInfo);
 
             if (DownloadLatest)
             {
-                if (NativeMethods.InternetGetConnectedState(out _, 0))
+                if (Win32Utilities.IsInternetConnectionAvailable())
                 {
                     if (string.IsNullOrEmpty(LocalBinPath))
                         return Method.DownloadLatest;
@@ -43,6 +60,10 @@ namespace rEFInd_Automenu.Resources
                         ? Method.DownloadLatest
                         : Method.LocalStorage;
                 }
+                else
+                {
+                    warnings = Warnings.NoInternet;
+                }
             }
 
             if (string.IsNullOrEmpty(LocalBinPath))
@@ -51,12 +72,6 @@ namespace rEFInd_Automenu.Resources
             return EmbeddedResourceManager.rEFIndBin_VersionInResources > LocalLatestVerInfo
                 ? Method.ExtractEmbedded
                 : Method.LocalStorage;
-        }
-
-        private static class NativeMethods
-        {
-            [DllImport("wininet.dll")]
-            public static extern bool InternetGetConnectedState(out int Description, int ReservedValue);
         }
     }
 }

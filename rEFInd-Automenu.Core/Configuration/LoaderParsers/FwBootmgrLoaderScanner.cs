@@ -1,7 +1,8 @@
 ﻿using log4net;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Configuration.MenuEntry;
-using rEFInd_Automenu.Extensions;
+using rEFInd_Automenu.TypesExtensions;
+using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,20 +13,21 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
     public class FwBootmgrLoaderScanner : ILoadersScanner
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(FwBootmgrLoaderScanner));
+        private readonly BcdEditBridge _bcdedit = new BcdEditBridge();
 
         public IEnumerable<MenuEntryInfo> Parse(FirmwareExecutableArchitecture Arch)
         {
             // Getting FwBootmgr data via bcdedit execution
             log.Info("Started FwBootmgr parsing (BcdEdit)");
-            string? EnumData = BcdEditBridge.ExecuteBcdedit("/enum {fwbootmgr}", true);
-            if (EnumData == null)
+            string? standartOutput = _bcdedit.Execute(string.Join(" ", "/enum", "{fwbootmgr}"), true);
+            if (string.IsNullOrEmpty(standartOutput))
             {
                 log.Error("Failed to enumrate FwBootmgr. Bcdedit returned empty data");
                 yield break;
             }
 
             // FwBootmgr contains bootorder which we are parsing
-            foreach (Match entry in Regex.Matches(EnumData, @"{(\S+)}", RegexOptions.Multiline).Cast<Match>())
+            foreach (Match entry in Regex.Matches(standartOutput, @"{(\S+)}", RegexOptions.Multiline).Cast<Match>())
             {
                 // Parsing values from enumerating each GUID from bootorder
                 if (Guid.TryParse(entry.Groups[1].Value, out _))
@@ -49,19 +51,19 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
             }
         }
 
-        private static MenuEntryInfo? ParseMenuEntry(string EntryGuid)
+        private MenuEntryInfo? ParseMenuEntry(string EntryGuid)
         {
             // Enumerating entry data via bcdedit execution
-            string? EntryData = BcdEditBridge.ExecuteBcdedit("/enum " + EntryGuid, true);
-            if (string.IsNullOrWhiteSpace(EntryData))
+            string? standartOutput = _bcdedit.Execute(string.Join(" ", "/enum", EntryGuid), true);
+            if (string.IsNullOrWhiteSpace(standartOutput))
             {
                 // No empties
                 log.Error("Failed to parse menuentry. Bcdedit returned empty data");
                 return null;
             }
 
-            Match DescriptionMatch = Regex.Match(EntryData, @"description\s+(.+)"); // Loader name
-            Match PathMatch = Regex.Match(EntryData, @"path\s+(.+)");               // Loader path
+            Match DescriptionMatch = Regex.Match(standartOutput, @"description\s+(.+)"); // Loader name
+            Match PathMatch = Regex.Match(standartOutput, @"path\s+(.+)");               // Loader path
 
             // No empties
             if (!DescriptionMatch.Success || !PathMatch.Success)
@@ -70,7 +72,8 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
             // Creating new menuentry from parsed data
             return new MenuEntryInfo()
             {
-                //OSType = OSType.Linux, // Most likely, it will be a linux system, so...
+                OSType = OSType.Linux, // Most likely, it will be a linux system, so...
+                Volume = EfiPartition.Identificator,
                 EntryName = DescriptionMatch.Groups[1].Value.Trim().FirstLetterToUpper(), // Some workaround for loaders name ;)
                 Loader = PathMatch.Groups[1].Value.Trim().TrimStart('\\', '/') // Loader path
             };

@@ -1,7 +1,7 @@
 ﻿using log4net;
 using rEFInd_Automenu.Configuration;
 using rEFInd_Automenu.Configuration.GlobalConfiguration;
-using rEFInd_Automenu.Extensions;
+using rEFInd_Automenu.TypesExtensions;
 using System;
 using System.IO;
 using System.Linq;
@@ -14,7 +14,7 @@ namespace rEFInd_Automenu.Installation
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(ThemeRepacker));
 
-        public static string CopyDirectory(DirectoryInfo ThemeDir, DirectoryInfo DestinationDir)
+        public static DirectoryInfo CopyDirectory(DirectoryInfo ThemeDir, DirectoryInfo DestinationDir, RefindConfiguration? parentConfiguration = null)
         {
             // Theme dir should exist
             if (!ThemeDir.Exists)
@@ -39,7 +39,7 @@ namespace rEFInd_Automenu.Installation
 
             // Creating new configuration instance to create config file
             log.InfoFormat("Installing formalization theme from directory - {0}", ThemeDir.FullName);
-            RefindConfiguration configuration = new RefindConfiguration();
+            RefindConfiguration configuration = parentConfiguration ?? new RefindConfiguration();
             configuration.Global = new RefindGlobalConfigurationInfo();
 
             // Searching for "conf" file
@@ -283,8 +283,8 @@ namespace rEFInd_Automenu.Installation
             }
 
             // Creating new configuration file
-            string ThemePath = Path.Combine(DestinationDir.FullName, "theme");
-            ConfigurationFileBuilder.WriteConfigurationToFile(configuration, Path.Combine(ThemePath, "theme.conf"));
+            DirectoryInfo ThemePath = DestinationDir.GetSubDirectory("theme");
+            ConfigurationFileBuilder.WriteConfigurationToFile(configuration, Path.Combine(ThemePath.FullName, "theme.conf"));
             return ThemePath;
         }
 

@@ -54,13 +54,13 @@ namespace rEFInd_Automenu.ConsoleApplication
         public bool RegenBoot { get; set; }
     }
 
-    [Verb("Obtain", aliases: new string[] { "Get", "Gain" }, HelpText = "Obtaining rEFInd resources and related sources")]
+    [Verb("Obtain", aliases: new string[] { "Get", "Gain" }, HelpText = "Obtaining rEFInd and related to it resources")]
     public class GetArgumentsInfo
     {
         [Option('E', "Embedded", Group = "Get commands", HelpText = "Action. Retrieves a prepared instance of the rEFInd installation image from program resources")]
         public bool ExtractResourceArchive { get; set; }
 
-        [Option('A', "Archive", Group = "Get commands", HelpText = "Action. Downloads the specified version of the installation image from the official rEFInd repository. The argument accepts the version of the archive being searched (For example: \"0.13.2\") or the keyword \"latest\" to download the latest current version")]
+        [Option('D', "Download", Group = "Get commands", HelpText = "Action. Downloads the specified version of the installation image from the official rEFInd repository. The argument accepts the version of the archive being searched (For example: \"0.13.2\") or the keyword \"latest\" to download the latest current version")]
         public string? DownloadSourceArchive { get; set; }
 
         [Option('S', "SysPar", Group = "Get commands", HelpText = "Action. Finds and attaches the Efi system partition to a free logical partition, or, if the partition is already connected, disconnects it")]

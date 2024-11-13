@@ -3,7 +3,8 @@ using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.Configuration.GlobalConfiguration;
 using rEFInd_Automenu.Configuration.MenuEntry;
 using rEFInd_Automenu.Configuration.Serializing;
-using rEFInd_Automenu.Extensions;
+using rEFInd_Automenu.TypesExtensions;
+using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -16,34 +17,43 @@ namespace rEFInd_Automenu.Configuration
         private static readonly ILog log = LogManager.GetLogger(typeof(ConfigurationFileBuilder));
 
         // Settings
-        private readonly string? _FormalizationThemePath;
         private readonly string _InstallationDirectory;
-        private readonly string _IconsDirectory;
 
         // Factory instance
-        public RefindConfiguration ConfigurationInstance { get; private set; }
+        private string IconsDirectory
+        {
+            get => ThemeDirectory?.FullName ?? Path.Combine(_InstallationDirectory, "icons");
+        }
+
+        public RefindConfiguration ConfigurationInstance
+        {
+            get;
+            private set;
+        }
+
+        public DirectoryInfo? ThemeDirectory
+        {
+            get;
+            set;
+        }
 
         public ConfigurationFileBuilder(string installationDirectory)
             : this(new RefindConfiguration(), installationDirectory) { }
 
-        public ConfigurationFileBuilder(string installationDirectory, string? formalizationThemePath)
+        public ConfigurationFileBuilder(string installationDirectory, DirectoryInfo? formalizationThemePath)
             : this(new RefindConfiguration(), installationDirectory, formalizationThemePath) { }
 
         public ConfigurationFileBuilder(RefindConfiguration configuration, string installationDirectory)
         {
             _InstallationDirectory = installationDirectory ?? throw new ArgumentNullException(nameof(installationDirectory));
             ConfigurationInstance = configuration;
-            _IconsDirectory = Path.Combine(_InstallationDirectory, "icons");
         }
 
-        public ConfigurationFileBuilder(RefindConfiguration configuration, string installationDirectory, string? formalizationThemePath)
+        public ConfigurationFileBuilder(RefindConfiguration configuration, string installationDirectory, DirectoryInfo? formalizationThemeDir)
         {
             _InstallationDirectory = installationDirectory ?? throw new ArgumentNullException(nameof(installationDirectory));
-            _FormalizationThemePath = formalizationThemePath;
+            ThemeDirectory = formalizationThemeDir;
             ConfigurationInstance = configuration;
-            _IconsDirectory = !string.IsNullOrEmpty(_FormalizationThemePath)
-                ? Path.Combine(_FormalizationThemePath, "icons")
-                : Path.Combine(_InstallationDirectory, "icons");
         }
 
         public void WriteConfigurationToFile(string FileName)
@@ -79,7 +89,7 @@ namespace rEFInd_Automenu.Configuration
                 ConfigurationInstance.Global.ScanForSources |= ScanFor.cd | ScanFor.optical;
 
             // Add formalization theme configuration if has
-            if (!string.IsNullOrEmpty(_FormalizationThemePath))
+            if (ThemeDirectory != null)
             {
                 log.Info("Added formalization theme configuration");
                 ConfigurationInstance.Global.Include = "theme/theme.conf";
@@ -101,7 +111,7 @@ namespace rEFInd_Automenu.Configuration
             ConfigurationInstance.Global.ScanForSources = ScanFor.manual;
 
             // Add formalization theme configuration if has
-            if (!string.IsNullOrEmpty(_FormalizationThemePath))
+            if (ThemeDirectory != null)
             {
                 log.Info("Added formalization theme configuration");
                 ConfigurationInstance.Global.Include = "theme/theme.conf";
@@ -128,7 +138,7 @@ namespace rEFInd_Automenu.Configuration
             {
                 // fetching loader root directory and getting icon
                 string LoaderRootName = menuEntry.Loader.Split(new char[] { '\\', '/' }, StringSplitOptions.RemoveEmptyEntries)[1];
-                string IconName = Path.Combine(_IconsDirectory, MenuEntryIconsAliases.GetIconName(LoaderRootName.ToLower()));
+                string IconName = Path.Combine(IconsDirectory, MenuEntryIconsAliases.GetIconName(LoaderRootName.ToLower()));
 
                 // assigning icon
                 if (File.Exists(IconName))
@@ -141,13 +151,14 @@ namespace rEFInd_Automenu.Configuration
             // Init
             ConfigurationInstance.Entries ??= new List<MenuEntryInfo>();
 
-            //
+            // Getting windows bootefimgr directory
             DirectoryInfo WinBootDir = EspFinder.EspDirectory.GetSubDirectory("EFI\\microsoft\\boot");
 
-            //
+            // Creatong boot entry
             ConfigurationInstance.Entries.Add(new MenuEntryInfo()
             {
                 EntryName = "Windows",
+                Volume = EfiPartition.Identificator,
                 Loader = Path.Combine("EFI", "microsoft", "boot", WinBootDir.EnumerateFiles("boot*.efi").First().Name),
                 OSType = OSType.Windows
             });

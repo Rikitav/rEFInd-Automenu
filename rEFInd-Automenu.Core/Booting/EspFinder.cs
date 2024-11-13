@@ -1,13 +1,12 @@
 ﻿using log4net;
-using rEFInd_Automenu.Extensions;
 using rEFInd_Automenu.RuntimeConfiguration;
+using rEFInd_Automenu.TypesExtensions;
+using rEFInd_Automenu.Win32;
 using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System;
 using System.IO;
-using System.Security.Principal;
 
-#pragma warning disable CA1416
 namespace rEFInd_Automenu.Booting
 {
     public static class EspFinder
@@ -31,65 +30,59 @@ namespace rEFInd_Automenu.Booting
             }
 
             // Checking administrator rights
-            using (WindowsIdentity identity = WindowsIdentity.GetCurrent())
+            if (!Win32Utilities.ProcessHasAdminRigths())
             {
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                if (!principal.IsInRole(WindowsBuiltInRole.Administrator))
-                {
-                    log.Warn("An attempt was made to execute UEFI firmware-related commands in a non-administrator process");
-                    throw new UnauthorizedAccessException("The program was launched without administrator rights.");
-                }
+                log.Warn("An attempt was made to execute UEFI firmware-related commands in a non-administrator process");
+                throw new UnauthorizedAccessException("The program was launched without administrator rights.");
             }
-
-            // Getting ESP path
-            DirectoryInfo? ESP;
 
             // Desiding which method program should access ESP volume
-            if (Environment.OSVersion.Version >= new Version(6, 2) | ProgramConfiguration.Instance.PreferMountvolEspSearch)
-            {
-                // Mounting ESP as logical drive with mount point
-                log.Info("Mounting ESP to check instance");
-                string? EspMountPoint = MountVolBribge.MountEsp();
+            DirectoryInfo ESP = GetEspDirectoryInfo();
 
-                // Checking MP value
-                if (string.IsNullOrEmpty(EspMountPoint))
-                {
-                    // Failed to get MP
-                    log.Error("Failed to get ESP mount point, value was null");
-                    throw new MountVolBribge.MountVolException("Failed to get ESP mount point");
-                }
-
-                //
-                log.InfoFormat("Efi system partition mount point : {0}", EspMountPoint);
-                ESP = new DirectoryInfo(EspMountPoint);
-            }
-            else
-            {
-                // Finding ESP's GUID-based volume path
-                log.Info("Getting Efi system partition GUID to check instance");
-                ESP = EfiPartition.GetDirectoryInfo();
-                log.InfoFormat("Efi system partition GUID : {0}", ESP.FullName);
-            }
-
-            if (ESP == null)
-            {
-                // Somehow null?
-                log.Error("ESP directory information instance was null");
-                throw new ArgumentNullException("ESP directory information instance was null");
-            }
-
-            // Trying to get File system access
+            // Trying to get ESP's filesystem access
             try
             {
+                // Trying to get File system access
                 log.Info("Getting ESP directory read\\write access");
                 ESP.GrantAccessControl();
+
+                // Granted successfully
                 log.Info("Access to ESP granted successfully");
                 return ESP;
             }
             catch (Exception Exc)
             {
+                // Failed to grant fs access
                 log.Fatal("Failed to grant access to ESP", Exc);
                 throw new UnauthorizedAccessException("Failed to grant access to ESP");
+            }
+        }
+
+        private static DirectoryInfo GetEspDirectoryInfo()
+        {
+            // Getting if ESP is already mounted as logical drive
+            if (MountVolBribge.TryFindEspMountPoint(out DriveInfo? mountPoint))
+            {
+                // Returing 
+                log.InfoFormat("Efi system partition mount point : {0}", mountPoint.Name);
+                return mountPoint.RootDirectory;
+            }
+            else
+            {
+                if (Environment.OSVersion.Version <= new Version(6, 1) | ProgramConfiguration.Instance.PreferMountvolEspSearch)
+                {
+                    // Failed to get mount point
+                    log.Error("Failed to get ESP mount point, value was null");
+                    throw new DriveNotFoundException("Failed to get ESP mount point");
+                }
+
+                // Finding ESP's GUID-based volume path
+                log.Info("Getting Efi system partition Guid path");
+                string EfiPathName = EfiPartition.GetFullPath();
+
+                // ESP Finded
+                log.InfoFormat("Efi system partition GUID : {0}", EfiPathName);
+                return new DirectoryInfo(EfiPathName);
             }
         }
     }

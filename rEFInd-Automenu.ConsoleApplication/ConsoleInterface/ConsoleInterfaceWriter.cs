@@ -2,7 +2,7 @@
 {
     public static class ConsoleInterfaceWriter
     {
-        private const int _OriginalMessageOffset = 50;
+        private const int _OriginalMessageOffset = 45;
         public static int MessageOffset { get; set; } = _OriginalMessageOffset;
 
         public static void ResetOffset()

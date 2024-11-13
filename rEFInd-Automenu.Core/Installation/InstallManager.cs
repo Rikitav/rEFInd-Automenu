@@ -1,6 +1,6 @@
 ﻿using log4net;
 using rEFInd_Automenu.Booting;
-using rEFInd_Automenu.Extensions;
+using rEFInd_Automenu.TypesExtensions;
 using System;
 using System.IO;
 using System.IO.Compression;

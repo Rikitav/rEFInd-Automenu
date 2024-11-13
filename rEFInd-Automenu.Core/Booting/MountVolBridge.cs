@@ -1,255 +1,264 @@
-using log4net;
+﻿using log4net;
+using rEFInd_Automenu.Win32;
 using Rikitav.IO.ExtensibleFirmware.SystemPartition;
 using System;
-using System.ComponentModel;
-using System.Diagnostics;
-using System.Drawing;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
 namespace rEFInd_Automenu.Booting
 {
-    public static class MountVolBribge
+    public class MountVolBribge : Win32ApplicationBridge
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(MountVolBribge));
-        private static string? _EspMountedPoint = null;
-        private static bool _NeedToUnmount = false;
+        private static readonly Version _Win7_CoreVersion = new Version(6, 1);
+        private static bool _UnmountingOnExitCreated = false;
 
-        public static string? ExecuteMountvol(string Params, bool ReadOutput = false)
+        public static DriveInfo? EfiVolumeMountPoint
         {
-            using Process MountVolProc = new Process()
-            {
-                StartInfo = new ProcessStartInfo("mountvol.exe")
-                {
-                    Arguments = Params,
-                    CreateNoWindow = true,
-                    RedirectStandardOutput = ReadOutput,
-                    WorkingDirectory = Environment.GetFolderPath(Environment.SpecialFolder.System)
-                }
-            };
-
-            log.InfoFormat("Mountvol is executing with parameters - {0}", Params);
-            MountVolProc.Start();
-            MountVolProc.WaitForExit();
-
-            if (MountVolProc.ExitCode != 0)
-            {
-                log.ErrorFormat("Failed to execute bcdedit (ExitCode : {0})", MountVolProc.ExitCode);
-                throw new Win32Exception(MountVolProc.ExitCode, "BcdEdit execution failed");
-            }
-
-            if (ReadOutput)
-            {
-                StringBuilder outputBuilder = new StringBuilder();
-                while (!MountVolProc.StandardOutput.EndOfStream)
-                    outputBuilder.AppendLine(MountVolProc.StandardOutput.ReadLine());
-
-                return outputBuilder.ToString();
-            }
-
-            return null;
+            get;
+            private set;
         }
 
-        public static void DoNotUnmount()
+        public static bool DeleteMountPointAfterExit
         {
-            _NeedToUnmount = false;
+            get;
+            set;
         }
 
-        public static string GetFreeMountvolLetter()
+        public MountVolBribge()
+            : base("mountvol.exe") { }
+
+        public DriveInfo? MountEsp()
         {
-            // Preset letters
-            string[] PresetLetters = new string[] { "S:\\", "E:\\", "X:\\" }; // this is not an accident...
-            string? SelectPresetLetter = PresetLetters.FirstOrDefault(x => !Directory.Exists(x));
-
-            // Checking for preset letters freedom
-            if (!string.IsNullOrWhiteSpace(SelectPresetLetter))
-                return SelectPresetLetter;
-
-            // Trying to find so
-            return Enumerable
-                .Range('D', 'Z' - 'D' + 1)
-                .Select(x => (char)x + ":\\")
-                .First(x => !Directory.Exists(x));
-        }
-
-        public static string? MountEsp()
-        {
-            log.Info("Trying to mount ESP as logical drive...");
+            log.Info("Trying to mount ESP as logical drive");
 
             // Checking if ESP mountpoint is already found
-            if (_EspMountedPoint != null)
+            if (KnowMountPoint())
             {
-                log.InfoFormat("ESP mount point is already known - {0}", _EspMountedPoint);
-                return _EspMountedPoint;
+                log.InfoFormat("ESP mount point is already known - {0}", EfiVolumeMountPoint);
+                return EfiVolumeMountPoint;
             }
 
             // Checking if ESP is already mounted
-            string? tmpMountPoint = IsEspMounted();
-            if (!string.IsNullOrEmpty(tmpMountPoint))
+            if (TryFindEspMountPoint(out DriveInfo? findMountPoint))
             {
-                log.InfoFormat("ESP mount point is already mounted - {0}", tmpMountPoint);
-                _EspMountedPoint = tmpMountPoint;
-                return _EspMountedPoint;
+                EfiVolumeMountPoint = findMountPoint;
+                DeleteMountPointAfterExit = false;
+
+                log.InfoFormat("ESP mount point is already mounted - {0}", findMountPoint);
+                return findMountPoint;
             }
 
             // Getting free mount point letter and mounting
-            tmpMountPoint = GetFreeMountvolLetter();
-            log.InfoFormat("Mounting ESP to {0}", tmpMountPoint);
+            string mountPointLetter = MVB_Helper.GetFreeMountvolLetter();
+            DriveInfo mountPoint = new DriveInfo(mountPointLetter);
+            log.InfoFormat("Mounting ESP to {0}", mountPoint);
 
-            string? mountVol = ExecuteMountvol(tmpMountPoint + " /s", true);
-            if (!Directory.Exists(tmpMountPoint))
+            if (!ExecuteMount(mountPoint) && !KnowMountPoint())
             {
-                log.ErrorFormat("Failed to mount ESP  - {0}", mountVol);
+                log.ErrorFormat("Failed to create Efi volume mount point");
                 return null;
             }
 
             // Info set
-            _EspMountedPoint = tmpMountPoint;
-            _NeedToUnmount = true;
+            EfiVolumeMountPoint = mountPoint;
+            DeleteMountPointAfterExit = true;
 
-            // success
+            // Deleting Efi volume mount point on process exit
+            if (!_UnmountingOnExitCreated)
+            {
+                _UnmountingOnExitCreated = true;
+                AppDomain.CurrentDomain.ProcessExit += (_, _) =>
+                {
+                    log.InfoFormat("Deleting Efi volume mount point (Process exiting)");
+                    UnmountEsp();
+                };
+            }
+
+            // Success
             log.Info("ESP successfully mounted");
-            return _EspMountedPoint;
+            return mountPoint;
         }
 
-        public static void FindUnmountEsp()
+        public void FindUnmountEsp()
         {
-            string? tmpMountPoint = IsEspMounted();
-            if (string.IsNullOrEmpty(tmpMountPoint))
-                return;
+            // Trying to find and delete Efi volume mount point
+            log.InfoFormat("Deleting ESP mount point from {0}", EfiVolumeMountPoint?.Name ?? "<NULL>");
 
-            string? mountVol = ExecuteMountvol(tmpMountPoint + " /d", true);
-            if (Directory.Exists(tmpMountPoint))
+            // Trying to find Efi volume mount point
+            if (!TryFindEspMountPoint(out DriveInfo? mountPoint))
             {
-                log.ErrorFormat("Failed to unmount ESP  - {0}", mountVol);
-                //return;
+                log.Info("ESP is not mounted");
+                return;
             }
-            else
+
+            // Trying to unmount ESP
+            if (!ExecuteUnmount(mountPoint) && KnowMountPoint())
             {
-                log.Info("ESP unmounted successfully");
+                log.ErrorFormat("Failed to delete ESP mount point");
+                return;
             }
+
+            // Info set
+            log.Info("ESP unmounted successfully");
+            EfiVolumeMountPoint = null;
+            DeleteMountPointAfterExit = false;
         }
 
-        public static void UnmountEsp()
+        public void UnmountEsp()
         {
             // Trying to unmount ESP
-            log.InfoFormat("Trying to unmount ESP from {0} mount point", _EspMountedPoint);
+            log.InfoFormat("Deleting ESP mount point from {0}", EfiVolumeMountPoint?.Name ?? "<NULL>");
 
             // No mounted point
-            if (_EspMountedPoint == null)
+            if (EfiVolumeMountPoint == null)
             {
-                log.Warn("No saved mount point");
+                log.Warn("ESP was not mounted previously");
                 return;
             }
 
-            if (!_NeedToUnmount)
+            // Checking if dont need to unmount
+            if (!DeleteMountPointAfterExit)
             {
-                log.Warn("Not nned to unmount");
+                log.Info("Not nned to unmount");
                 return;
             }
 
-            string? mountVol = ExecuteMountvol(_EspMountedPoint + " /d", true);
-            if (Directory.Exists(_EspMountedPoint))
+            // Deleting Efi volume mount point
+            if (!ExecuteUnmount(EfiVolumeMountPoint) && KnowMountPoint())
             {
-                log.ErrorFormat("Failed to unmount ESP  - {0}", mountVol);
-                //return;
-            }
-            else
-            {
-                log.Info("ESP unmounted successfully");
+                log.ErrorFormat("Failed to delete ESP mount point");
+                return;
             }
 
-            _EspMountedPoint = null;
-            _NeedToUnmount = false;
+            // Success
+            log.Info("ESP unmounted successfully");
+            EfiVolumeMountPoint = null;
+            DeleteMountPointAfterExit = false;
         }
 
-        public static string? IsEspMounted()
+        public static bool TryFindEspMountPoint([NotNullWhen(true)] out DriveInfo? mountPoint)
         {
-            log.Info("Searching for mounted ESP...");
-            string volumePath = EfiPartition.GetFullPath(); // ESP --> \\?\Volume{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}\
+            log.Info("Searching if ESP is already have mount point");
+            string volumePath = EfiPartition.GetFullPath(); // ESP Guid based path looks like this --> \\?\Volume{xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}\
 
-            // Getting windows NT core version
-            int NtVer = Environment.OSVersion.Version.Major;
-            if (NtVer <= 6) // If version is below or equals 6, 'GetVolumeNameForVolumeMountPointW' will work different with ESP volume
+            // Checking if ESP mountpoint is already found
+            if (KnowMountPoint())
             {
-                log.WarnFormat("WinNT version is below 10 ({0}), problems may occur during search", NtVer);
+                log.InfoFormat("ESP mount point is already known - {0}", EfiVolumeMountPoint);
+                mountPoint = EfiVolumeMountPoint;
+                return true;
+            }
+
+            // Checking system version
+            Version CurrentWindowsVersion = Environment.OSVersion.Version;
+            if (CurrentWindowsVersion <= _Win7_CoreVersion)
+            {
+                // 'GetVolumeNameForVolumeMountPointW' function works different with ESP volume on Windows 7, and give's ERROR_INVALID_PARAMETER
+                log.WarnFormat("WinNT version is below 10 ({0}), problems may occur during search", CurrentWindowsVersion);
             }
 
             // Enumerating logical volumes
-            foreach (string drive in Environment.GetLogicalDrives())
+            StringBuilder pathBuffer = new StringBuilder(260);
+            foreach (DriveInfo logicalDrive in DriveInfo.GetDrives())
             {
-                // Getting GUID-based volume path for logical drive
-                StringBuilder buffer = new StringBuilder(260);
-                if (!NativeMethods.GetVolumeNameForVolumeMountPointW(drive, buffer, buffer.Capacity))
+                if (!NativeMethods.GetVolumeNameForVolumeMountPointW(logicalDrive.Name, pathBuffer, pathBuffer.Capacity))
                 {
-                    // ERROR!
+                    // Error check!
                     int lastErr = Marshal.GetLastWin32Error();
 
-                    // If NT core version is over 6, then it fatal
-                    if (NtVer > 6)
+                    // Checking for error code and NT Core version
+                    if (lastErr == NativeMethods.ERROR_INVALID_PARAMETER && CurrentWindowsVersion <= _Win7_CoreVersion)
                     {
-                        log.ErrorFormat("Failed to get Volume information. Win32Error - {0}", lastErr);
-                        //throw new Win32Exception(lastErr);
-                        return null;
+                        // Found trough error code check on Win7 system
+                        log.InfoFormat("ESP volume mount point finded - {0}", logicalDrive);
+                        mountPoint = logicalDrive;
+                        EfiVolumeMountPoint = logicalDrive;
+                        return true;
                     }
 
-                    // 87 code if fine if NT core version equal 6 on ESP volume
-                    if (lastErr == 87)
-                    {
-                        string EfiDirPath = Path.Combine(drive, "EFI", "microsoft");
-                        if (!Directory.Exists(EfiDirPath))
-                        {
-                            log.WarnFormat("Failed to get volume guid path name. Win32Error - {0}", lastErr);
-                            continue;
-                        }
-
-                        log.InfoFormat("ESP volume mount point finded - {0} (NT6-Err87)", drive);
-                        return drive;
-                    }
-                    else // and this is not fine
-                    {
-                        log.WarnFormat("Failed to get volume guid path name. Win32Error - {0}", lastErr);
-                        continue;
-                    }
-                }
-
-                // Checking 
-                if (volumePath.Equals(buffer.ToString(), StringComparison.CurrentCultureIgnoreCase))
-                {
-                    // Founded
-                    log.InfoFormat("ESP volume mount point finded - {0}", drive);
-                    return drive;
-                }
-                else
-                {
-                    // Guid path name not equal
-                    //log.Info("");
+                    // WinVer is over 7
+                    log.ErrorFormat("Failed to get volume path name for mount point {0}. Win32Error - {1}", logicalDrive, lastErr);
                     continue;
                 }
+
+                // Getting volume path name for comparing with ESP volume path name
+                string volumePathName = pathBuffer.ToString();
+                if (string.IsNullOrEmpty(volumePathName))
+                {
+                    log.ErrorFormat("Failed to get volume path name for mount point {0}. Function returned empty buffer", logicalDrive);
+                    continue;
+                }
+
+                // Comparing 
+                if (!volumePath.Equals(volumePathName, StringComparison.CurrentCultureIgnoreCase))
+                {
+                    // Volume path names are not equal => not ESP
+                    continue;
+                }
+
+                // Founded
+                mountPoint = logicalDrive;
+                EfiVolumeMountPoint = logicalDrive;
+                log.InfoFormat("ESP volume mount point finded - {0}", mountPoint);
+                return true;
             }
 
-            // Not found
-            log.Error("Enumeration end, ESP was not founded");
-            return null;
+            log.ErrorFormat("ESP volume mount point wasn't finded");
+            mountPoint = null;
+            EfiVolumeMountPoint = null;
+            return false;
         }
 
-        public class MountVolException : Exception
+        [MemberNotNullWhen(true, nameof(EfiVolumeMountPoint))]
+        private static bool KnowMountPoint()
         {
-            public MountVolException(string message)
-                : base(message) { }
+            if (EfiVolumeMountPoint != null && EfiVolumeMountPoint.IsReady)
+                return true;
 
-            public MountVolException(Exception inner)
-                : base("Failed to execute mountvol", inner) { }
+            EfiVolumeMountPoint = null;
+            return false;
+        }
 
-            public MountVolException(string message, Exception inner)
-                : base(message, inner) { }
+        private bool ExecuteUnmount(DriveInfo mountPoint)
+        {
+            string args = string.Join(" ", mountPoint.Name, "/d");
+            return string.IsNullOrEmpty(Execute(args, true));
+        }
+
+        private bool ExecuteMount(DriveInfo mountPoint)
+        {
+            string args = string.Join(" ", mountPoint.Name, "/s");
+            return string.IsNullOrEmpty(Execute(args, true));
+        }
+
+        private static class MVB_Helper
+        {
+            public static string GetFreeMountvolLetter()
+            {
+                // Preset letters
+                string[] PresetLetters = new string[] { "S:\\", "E:\\", "X:\\" }; // Should i comment this? (ᵕ•_•)
+                string? SelectPresetLetter = PresetLetters.FirstOrDefault(x => !Directory.Exists(x));
+
+                // Checking for preset letters freedom
+                if (!string.IsNullOrWhiteSpace(SelectPresetLetter))
+                    return SelectPresetLetter;
+
+                // Trying to find so
+                return Enumerable
+                    .Range('D', 'Z' - 'D' + 1)
+                    .Select(x => (char)x + ":\\")
+                    .First(x => !Directory.Exists(x));
+            }
         }
 
         private static class NativeMethods
         {
+            public const int ERROR_INVALID_PARAMETER = 0x57;
+
             [DllImport("Kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
             public static extern bool GetVolumeNameForVolumeMountPointW(
                 string lpszVolumeMountPoint,

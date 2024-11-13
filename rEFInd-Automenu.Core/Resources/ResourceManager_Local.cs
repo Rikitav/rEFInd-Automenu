@@ -1,5 +1,8 @@
 ﻿using log4net;
+using rEFInd_Automenu.RuntimeConfiguration;
 using System;
+using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -10,9 +13,9 @@ namespace rEFInd_Automenu.Resources
     {
         public static readonly string VersionsDirectoryPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "rEFInd Automenu", "Versions");
         public static readonly DirectoryInfo VersionsDirectory = Directory.CreateDirectory(VersionsDirectoryPath);
+        public static event Action<Version>? LocalStorageUpdated;
 
-        public static readonly ILog log = LogManager.GetLogger(typeof(LocalResourceManager));
-        public static EventHandler? LocalStorageUpdated;
+        private static readonly ILog log = LogManager.GetLogger(typeof(LocalResourceManager));
 
         /// <summary>
         /// Checking for any resource on local storage
@@ -54,12 +57,7 @@ namespace rEFInd_Automenu.Resources
             log.InfoFormat("Getting bin archive FileStream of version {0}", version);
 
             // Checking for any locally saved resource
-            if (!AnyLocalResourceExist())
-            {
-                // No resource archives
-                log.Error("No locally saved resources");
-                throw new EmptyLocalDatabaseException();
-            }
+            LRM_Helper.ThrowIfEmptyDataBase();
 
             // Formating path for asked resource
             string VersionedPath = GetBinArchiveFullPathByVersion(version);
@@ -81,18 +79,15 @@ namespace rEFInd_Automenu.Resources
         /// <returns></returns>
         /// <exception cref="EmptyLocalDatabaseException"></exception>
         /// <exception cref="FileNotFoundException"></exception>
-        public static FileStream GetLatestBinArchiveStream()
+        public static FileStream GetLatestBinArchiveStream([NotNullWhen(true)] out Version? version)
         {
+            log.Info("Opening new readonly FileStream for latest versioned resource archive");
+
             // Checking for any locally saved resource
-            if (!AnyLocalResourceExist())
-            {
-                // No resource archives
-                log.Error("No locally saved resources");
-                throw new EmptyLocalDatabaseException();
-            }
+            LRM_Helper.ThrowIfEmptyDataBase();
 
             // Formating path for latest resource
-            string LatestFullPath = GetLatestBinArchiveFullPath(out _);
+            string LatestFullPath = GetLatestBinArchiveFullPath(out version);
             if (string.IsNullOrEmpty(LatestFullPath))
             {
                 log.Info("Failed to get resource archive path. Returned path was empty");
@@ -124,12 +119,12 @@ namespace rEFInd_Automenu.Resources
         /// </summary>
         /// <param name="verInfo"></param>
         /// <returns></returns>
-        public static string GetLatestBinArchiveFullPath(out Version verInfo)
+        public static string GetLatestBinArchiveFullPath(out Version? verInfo)
         {
             // Ordering files on local database by they version and get the last one
-            FileInfo? LastBin = VersionsDirectory
-                .EnumerateFiles("refind-bin-*.zip")
-                .OrderBy(ArchivePath => Version.Parse(ArchivePath.Name.AsSpan("refind-bin-".Length, ArchivePath.Name.Length - "refind-bin-.zip".Length)))
+            FileInfo? LastBin = LRM_Helper
+                .EnumerateArchives()
+                .OrderBy(a => LRM_Helper.ParseVersionFromFileName(a.Name))
                 .LastOrDefault();
 
             if (LastBin == null)
@@ -150,44 +145,90 @@ namespace rEFInd_Automenu.Resources
         /// <param name="version"></param>
         /// <param name="BinStream"></param>
         /// <returns></returns>
-        public static async Task SaveBinArchive(Version version, Stream BinStream)
+        public static async Task<string> SaveBinArchive(Version version, Stream BinStream)
         {
+            // Starting
+            log.InfoFormat("Resource archive of version \"{0}\" is saving as local resource", version);
+
+            // Checking local resources writing right
+            if (!ProgramConfiguration.Instance.AllowCreateLocalResource)
+            {
+                log.Warn("Creating local resources is disallowed for current session");
+                return string.Empty;
+            }
+
             // Getting if resource archive already exists on local database with given version
             string BinPath = Path.Combine(VersionsDirectory.FullName, string.Format("refind-bin-{0}.zip", version));
-            log.InfoFormat("Resource archive of version \"{0}\" is saving to file \"{1}\"", version, BinPath);
+
+            // Checking if such file is already exists
             if (File.Exists(BinPath))
             {
                 // Resource already exists
-                log.WarnFormat("Resource archive of version {0} already exists in local database. Skipping saving", version);
-                return;
+                log.WarnFormat("Resource archive already exists in local database");
+                return string.Empty;
             }
 
             try
             {
                 // Creating file and writing data stream into
                 log.InfoFormat("Saving resource archive of version {0} to local database", version);
-                using FileStream BinFile = File.Create(BinPath);
-                await BinStream.CopyToAsync(BinFile);
-                log.InfoFormat("Resource archive was succesfully saved", version);
-                LocalStorageUpdated?.Invoke(null, EventArgs.Empty);
+                using (FileStream BinFile = File.Create(BinPath))
+                {
+                    if (BinStream.CanSeek)
+                        BinStream.Seek(0, SeekOrigin.Begin);
+
+                    await BinStream.CopyToAsync(BinFile);
+                    await BinFile.FlushAsync();
+                }
+
+                log.InfoFormat("Resource archive was succesfully saved");
+                LocalStorageUpdated?.Invoke(version);
+                return BinPath;
             }
             catch (Exception exc)
             {
                 // Something went wrong on resource saving
                 log.Warn("Failed to save resource archive because of exception", exc);
+                return string.Empty;
             }
         }
 
         public static Version[] GetSavedArchivesVersionsList()
         {
             log.Info("Getting a list of locally saved versions of rEFInd");
-            Version[] versions = VersionsDirectory
-                .EnumerateFiles("refind-bin-*.zip")
-                .Select(ArchivePath => Version.Parse(ArchivePath.Name.AsSpan("refind-bin-".Length, ArchivePath.Name.Length - "refind-bin-.zip".Length)))
+            Version[] versions = LRM_Helper
+                .EnumerateArchives()
+                .Select(a => LRM_Helper.ParseVersionFromFileName(a.Name))
+                .OrderBy(x => x)
+                .Reverse()
                 .ToArray();
 
             log.InfoFormat("Enumerating finished. Locally saved versions : {0}", string.Join<Version>("; ", versions));
             return versions;
+        }
+
+        private static class LRM_Helper
+        {
+            public static Version ParseVersionFromFileName(string Name)
+            {
+                int start = Name.Length - "refind-bin-".Length + 1;
+                int length = start - ".zip".Length - 1;
+                return Version.Parse(Name.AsSpan(start, length));
+            }
+
+            public static void ThrowIfEmptyDataBase()
+            {
+                if (!AnyLocalResourceExist())
+                {
+                    log.Error("No locally saved resources");
+                    throw new EmptyLocalDatabaseException();
+                }
+            }
+
+            public static IEnumerable<FileInfo> EnumerateArchives()
+            {
+                return VersionsDirectory.EnumerateFiles("refind-bin-*.zip");
+            }
         }
 
         public class EmptyLocalDatabaseException : Exception

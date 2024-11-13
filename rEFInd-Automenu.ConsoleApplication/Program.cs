@@ -1,70 +1,72 @@
 ﻿using CommandLine;
-using CommandLine.Text;
 using log4net;
 using rEFInd_Automenu.Booting;
 using rEFInd_Automenu.ConsoleApplication.ConsoleInterface;
-using rEFInd_Automenu.ConsoleApplication.FunctionalWorkers;
+using rEFInd_Automenu.ConsoleApplication.ProcedureProcessors.GlobalConfig;
+using rEFInd_Automenu.ConsoleApplication.ProcedureProcessors.Install;
+using rEFInd_Automenu.ConsoleApplication.ProcedureProcessors.Instance;
+using rEFInd_Automenu.ConsoleApplication.ProcedureProcessors.MenuEntries;
+using rEFInd_Automenu.ConsoleApplication.ProcedureProcessors.Obtain;
 using rEFInd_Automenu.Resources;
-using rEFInd_Automenu.RuntimeConfiguration;
 using rEFInd_Automenu.RuntimeLogging;
+using rEFInd_Automenu.Win32;
 using Rikitav.IO.ExtensibleFirmware;
 using Rikitav.Plasma.Tasks.Management;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using System.Security.Principal;
-using System.Text;
 
 namespace rEFInd_Automenu.ConsoleApplication
 {
-    internal static class ConsoleProgram
+    public static class ConsoleProgram
     {
         // Logger
-        public static readonly ILog Logger = LogManager.GetLogger(typeof(ConsoleProgram));
+        private static readonly ILog Logger = LogManager.GetLogger(typeof(ConsoleProgram));
 
-        public static bool IsElevatedProcess
+        // Interface fields
+        public static readonly bool IsElevatedProcess = Win32Utilities.ProcessHasAdminRigths();
+        public static readonly object SyncLockObject = new object();
+        public static readonly TaskShell Interface = new TaskShell();
+
+        public static  ConsoleControllerCommands CommonCommands
         {
             get
             {
-                using WindowsIdentity identity = WindowsIdentity.GetCurrent();
-                WindowsPrincipal principal = new WindowsPrincipal(identity);
-                return principal.IsInRole(WindowsBuiltInRole.Administrator);
+                ConsoleControllerCommands commands = new ConsoleControllerCommands();
+                commands.SetLockHandle(SyncLockObject);
+                return commands;
             }
         }
 
-        // Interface fields
-        internal static readonly TaskShell Interface = new TaskShell()
+        public static ConsoleControllerProgressBarCommands ProgressCommands
         {
-            HandleMethod = ExceptionHandleMethod.AsError,
-            ExitOnExceptionalError = false,
-        };
+            get
+            {
+                ConsoleControllerProgressBarCommands commands = new ConsoleControllerProgressBarCommands();
+                commands.SetLockHandle(SyncLockObject);
+                return commands;
+            }
+        }
+
+        // Initiliazation
+        static ConsoleProgram()
+        {
+            // Writing program header
+            WriteHeader();
+
+            // Initilazing runtime
+            CoreLogging.InitLogFile();
+            AppDomain.CurrentDomain.UnhandledException += UnhandledException;
+            Interface.AfterControllerError += AfterControllerExecution;
+            Interface.AfterControllerWarning += AfterControllerExecution;
+            Interface.AfterControllerFaulted += AfterControllerFaulted;
+
+            // Configuring TaskShell
+            Interface.HandleMethod = ExceptionHandleMethod.AsError;
+            Interface.ExitOnExceptionalError = false;
+        }
 
         private static void Main(string[] args)
         {
-            // Initilazing interface
-            CoreLogging.InitLogFile();
-            AppDomain.CurrentDomain.UnhandledException += UnhandledException;
-            AppDomain.CurrentDomain.ProcessExit += ProcessExit;
-            Interface.AfterControllerError += AfterControllerError;
-
-            /* In case you like those fancy headers...
-            // Sexy letters header
-            Console.WriteLine(@" ______   ______   ______  __   __   __   _____    ");
-            Console.WriteLine(@"/\  == \ /\  ___\ /\  ___\/\ \ /\ '-.\ \ /\  __-.  ");
-            Console.WriteLine(@"\ \  __< \ \  __\ \ \  __\\ \ \\ \ \-.  \\ \ \/\ \ ");
-            Console.WriteLine(@" \ \_\ \_\\ \_____\\ \_\   \ \_\\ \_\\'\_\\ \____- ");
-            Console.WriteLine(@"  \/_/ /_/ \/_____/ \/_/    \/_/ \/_/ \/_/ \/____/ ");
-            */
-
-            // Program and Copyright header
-            Version[] TitleVersions = new Version[] { EmbeddedResourceManager.rEFIndBin_VersionInResources, Assembly.GetExecutingAssembly().GetName().Version ?? new Version(2, 0, 0, 0) };
-            int MaxVersionLength = TitleVersions.Select(v => v.ToString().Length).Max();
-            Console.ForegroundColor = ConsoleColor.White;
-            Console.WriteLine();
-            Console.WriteLine("rEFInd boot manager {0, -" + MaxVersionLength + "} (C) Roderick W. Smith", TitleVersions[0]);
-            Console.WriteLine("rEFInd Automenu     {0, -" + MaxVersionLength + "} (C) Rikitav", TitleVersions[1]);
-            Console.WriteLine();
-            Console.ResetColor();
-
             // This var need for correct output formating
             bool AnyEnvironmentError = false;
 
@@ -92,11 +94,64 @@ namespace rEFInd_Automenu.ConsoleApplication
                 ConsoleInterfaceWriter.WriteWarning("The program was launched without administrator rights. Some features will be disabled");
             }
 
+            // This statement need for correct output formating
             if (AnyEnvironmentError)
                 Console.WriteLine();
 
-            // CMD arguments Parser
-            //StringWriter ParseErrorsWriter = new StringWriter();
+            // Processing arguments
+            ProcessArguments(args);
+            Environment.Exit(0);
+        }
+
+        private static void UnhandledException(object sender, UnhandledExceptionEventArgs args)
+        {
+            if (args.IsTerminating)
+                Logger.Fatal("Process was terminated by unhandled exception", args.ExceptionObject as Exception);
+        }
+
+        private static void AfterControllerExecution(object sender, TaskShellEventArgs args)
+        {
+            if (args.TerminationRequested)
+                Environment.Exit(1);
+        }
+
+        private static void AfterControllerFaulted(object sender, TaskShellEventArgs args)
+        {
+            Logger.Fatal("Process was terminated by unhandled exception", args.FaultedException);
+            Environment.Exit(1);
+        }
+
+        private static void WriteHeader()
+        {
+            // In case you like those fancy headers, you can turn it on trough registry key!
+            if (RegistryExplorer.Instance.ShowLargeHeader)
+            {
+                // Writing sexy header
+                Console.WriteLine();
+                Console.WriteLine(@"   ______   ______   ______  __   __   __   _____    ");
+                Console.WriteLine(@"  /\  == \ /\  ___\ /\  ___\/\ \ /\ '-.\ \ /\  __-.  ");
+                Console.WriteLine(@"  \ \  __< \ \  __\ \ \  __\\ \ \\ \ \-.  \\ \ \/\ \ ");
+                Console.WriteLine(@"   \ \_\ \_\\ \_____\\ \_\   \ \_\\ \_\\'\_\\ \____- ");
+                Console.WriteLine(@"    \/_/ /_/ \/_____/ \/_/    \/_/ \/_/ \/_/ \/____/ ");
+            }
+
+            // Getting versions
+            Version bootManagerVersion = EmbeddedResourceManager.rEFIndBin_VersionInResources;
+            Version automenuVersion = Assembly.GetExecutingAssembly().GetName().Version ?? new Version(2, 0, 0, 0);
+            int MaxVersionLength = new Version[] { bootManagerVersion, automenuVersion }.Select(v => v.ToString().Length).Max();
+
+            // Program and Copyright header
+            Console.ForegroundColor = ConsoleColor.White;
+            Console.WriteLine();
+            Console.WriteLine("rEFInd boot manager {0} (C) Roderick W. Smith", bootManagerVersion.ToString().PadRight(MaxVersionLength));
+            Console.WriteLine("rEFInd Automenu     {0} (C) Rikitav", automenuVersion.ToString().PadRight(MaxVersionLength));
+            Console.WriteLine();
+            Console.ResetColor();
+        }
+
+        private static void ProcessArguments(string[] args)
+        {
+            // Arguments parser
             Parser ArgsParser = new Parser(With =>
             {
                 With.HelpWriter = null; //ParseErrorsWriter;
@@ -109,13 +164,13 @@ namespace rEFInd_Automenu.ConsoleApplication
 
             // Parsing command line arguments
             ParserResult<object> parserResult = ArgsParser.ParseArguments<
-                InstallArgumentsInfo, InstanceArgumentsInfo, GetArgumentsInfo, GlobalConfigurationArgumentsInfo, EntriesConfigurationArgumentsInfo>(args);
+                InstallArgumentsInfo, InstanceArgumentsInfo, GetArgumentsInfo,
+                GlobalConfigurationArgumentsInfo, EntriesConfigurationArgumentsInfo>(args);
 
             if (parserResult.Errors.Any())
             {
                 Logger.Error("Arguments was not parsed");
-                //ConsoleInterfaceWriter.WriteWarning(ParseErrorsWriter.ToString());
-                WriteHelp(parserResult);
+                ArgumentsHelper.WriteHelp(parserResult);
                 Environment.Exit(1);
             }
 
@@ -128,14 +183,14 @@ namespace rEFInd_Automenu.ConsoleApplication
                         ConsoleInterfaceWriter.WriteHeader("Installing rEFInd");
                         parserResult.WithParsed<InstallArgumentsInfo>(info =>
                         {
-                            LogArguments(info);
-                            if (!ValidMainArgumentsCount(info, args))
+                            ArgumentsHelper.LogArguments(info, Logger);
+                            if (!ArgumentsHelper.ValidMainArgumentsCount(info, args))
                             {
                                 ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind install --help\" for details.");
                                 Environment.Exit(1);
                             }
 
-                            InstallArgumentsWorker.Execute(info);
+                            ProcedureProcessor_Install.Execute(info);
                         });
                         break;
                     }
@@ -147,14 +202,14 @@ namespace rEFInd_Automenu.ConsoleApplication
                         ConsoleInterfaceWriter.WriteHeader("Touching instance");
                         parserResult.WithParsed<InstanceArgumentsInfo>(info =>
                         {
-                            LogArguments(info);
-                            if (!ValidMainArgumentsCount(info, args))
+                            ArgumentsHelper.LogArguments(info, Logger);
+                            if (!ArgumentsHelper.ValidMainArgumentsCount(info, args))
                             {
                                 ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind instance --help\" for details.");
                                 Environment.Exit(1);
                             }
 
-                            InstanceArgumentsWorker.Execute(info);
+                            ProcedureProcessor_Instance.Execute(info);
                         });
                         break;
                     }
@@ -166,14 +221,14 @@ namespace rEFInd_Automenu.ConsoleApplication
                         ConsoleInterfaceWriter.WriteHeader("Getting object");
                         parserResult.WithParsed<GetArgumentsInfo>(info =>
                         {
-                            LogArguments(info);
-                            if (!ValidMainArgumentsCount(info, args))
+                            ArgumentsHelper.LogArguments(info, Logger);
+                            if (!ArgumentsHelper.ValidMainArgumentsCount(info, args))
                             {
                                 ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind get --help\" for details.");
                                 Environment.Exit(1);
                             }
 
-                            GetArgumentsWorker.Execute(info);
+                            ProcedureProcessor_Obtain.Execute(info);
                         });
                         break;
                     }
@@ -185,14 +240,14 @@ namespace rEFInd_Automenu.ConsoleApplication
                         ConsoleInterfaceWriter.WriteHeader("Changing config");
                         parserResult.WithParsed<GlobalConfigurationArgumentsInfo>(info =>
                         {
-                            LogArguments(info);
-                            if (!ValidMainArgumentsCount(info, args))
+                            ArgumentsHelper.LogArguments(info, Logger);
+                            if (!ArgumentsHelper.ValidMainArgumentsCount(info, args))
                             {
                                 ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind configuration --help\" for details.");
                                 Environment.Exit(1);
                             }
 
-                            GlobalConfigurationArgumentsWorker.Execute(info);
+                            ProcedureProcessor_GlobalConfig.Execute(info);
                         });
                         break;
                     }
@@ -204,109 +259,18 @@ namespace rEFInd_Automenu.ConsoleApplication
                         ConsoleInterfaceWriter.WriteHeader("Changing config");
                         parserResult.WithParsed<EntriesConfigurationArgumentsInfo>(info =>
                         {
-                            LogArguments(info);
-                            if (!ValidMainArgumentsCount(info, args))
+                            ArgumentsHelper.LogArguments(info, Logger);
+                            if (!ArgumentsHelper.ValidMainArgumentsCount(info, args))
                             {
-                                ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind configuration --help\" for details.");
+                                ConsoleInterfaceWriter.WriteWarning("You can only specify one main argument from a group. Type \"refind menuentry --help\" for details.");
                                 Environment.Exit(1);
                             }
 
-                            EntriesConfigurationArgumentsWorker.Execute(info);
+                            ProcedureProcessor_MenuEntries.Execute(info);
                         });
                         break;
                     }
             }
-
-            Environment.Exit(0);
-        }
-
-        private static void AfterControllerError(object sender, TaskShellEventArgs args)
-        {
-            if (args.TerminationRequested)
-                Environment.Exit(1);
-        }
-
-        private static void UnhandledException(object sender, UnhandledExceptionEventArgs args)
-        {
-            if (args.IsTerminating)
-                Logger.Fatal("Process was terminated by unhandled exception", args.ExceptionObject as Exception);
-        }
-
-        private static void ProcessExit(object? sender, EventArgs args)
-        {
-            MountVolBribge.UnmountEsp();
-            RegistryExplorer.Branch.Close();
-        }
-
-        public static TCommands GetControllerCommands<TCommands>(object? LockHandle = null) where TCommands : IConsoleInterfacenterfaceCommands, new()
-        {
-            TCommands ctrl = new TCommands();
-            if (LockHandle != null)
-                ctrl.SetLockHandle(LockHandle);
-
-            return ctrl;
-        }
-
-        public static bool ValidMainArgumentsCount(object argumentsInfo, string[] args)
-        {
-            int MainArgsCount = argumentsInfo.GetType().GetProperties().Count(prop =>
-            {
-                OptionAttribute? optionAttribute = prop.GetCustomAttribute<OptionAttribute>();
-                if (optionAttribute == null)
-                    return false;
-
-                if (string.IsNullOrEmpty(optionAttribute.Group))
-                    return false;
-
-                return 
-                    args.Contains("-" + optionAttribute.ShortName, StringComparer.CurrentCultureIgnoreCase) ||
-                    args.Contains("--" + optionAttribute.LongName, StringComparer.CurrentCultureIgnoreCase);
-            });
-
-            return MainArgsCount == 1;
-        }
-
-        public static void WriteHelp<TArguments>(ParserResult<TArguments> parserResult)
-        {
-            HelpText Help = HelpText.AutoBuild(parserResult);
-            Help.Copyright = string.Empty;
-            Help.Heading = string.Empty;
-            Help.AddEnumValuesToHelpText = true;
-
-            string HelpString = Help.ToString();
-            ConsoleInterfaceWriter.WriteWarning("\n" + HelpString.TrimStart('\n', '\r'));
-        }
-
-        private static void LogArguments(object ArgumentsInfo)
-        {
-            // 
-            Type ObjType = ArgumentsInfo.GetType();
-            PropertyInfo[] Props = ObjType.GetProperties(BindingFlags.Instance | BindingFlags.Public);
-
-            // 
-            string[] FieldNames = Props.Select(x => x.Name).ToArray();
-            string[] TypeNames = Props.Select(x => x.PropertyType.FullName ?? "NullPropertyName").ToArray();
-            string[] Values = Props.Select(x => x.GetValue(ArgumentsInfo)?.ToString() ?? "<NULL>").ToArray();
-
-            // 
-            int FieldNamesPadding = FieldNames.Select(x => x.Length).Max();
-            int TypeNamesPadding = TypeNames.Select(x => x.Length).Max();
-            int ValuesPadding = Values.Select(x => x.Length).Max();
-
-            // 
-            StringBuilder builder = new StringBuilder("From \"" + ObjType.Name + "\" Parsed :\n");
-            builder.AppendLine(string.Format("{0} | {1} | {2}", "Field".PadRight(FieldNamesPadding), "Type".PadRight(TypeNamesPadding), "Value".PadRight(ValuesPadding)));
-            builder.AppendLine(string.Format("{0} | {1} | {2}", new string(' ', FieldNamesPadding), new string(' ', TypeNamesPadding), new string(' ', ValuesPadding)));
-
-            for (int i = 0; i < Values.Length; i++)
-            {
-                builder.AppendLine(string.Format("{0} | {1} | {2}",
-                    FieldNames[i].PadRight(FieldNamesPadding),
-                    TypeNames[i].PadRight(TypeNamesPadding),
-                    Values[i].PadRight(ValuesPadding)));
-            }
-
-            Logger.Info(builder.ToString());
         }
     }
 }

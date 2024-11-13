@@ -1,5 +1,4 @@
 ﻿using log4net;
-using rEFInd_Automenu.Booting;
 using System;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
@@ -9,6 +8,9 @@ namespace rEFInd_Automenu.Booting
 {
     public static class SecureBootInfo
     {
+        private static readonly ILog log = LogManager.GetLogger(typeof(SecureBootInfo));
+        private static NativeMethods.SYSTEM_SECUREBOOT_INFORMATION? _SecureBootInformation;
+
         /// <summary>
         /// Does the system support SecureBoot technology
         /// </summary>
@@ -37,31 +39,24 @@ namespace rEFInd_Automenu.Booting
             }
         }
 
-        private static readonly ILog log = LogManager.GetLogger(typeof(SecureBootInfo));
-        private static NativeMethods.SYSTEM_SECUREBOOT_INFORMATION? _SecureBootInformation;
-
         /// <summary>
         /// receives SecureBoot technology status
         /// </summary>
         /// <exception cref="Win32Exception"></exception>
-        public static void InitSecureBootInfo()
+        private static void InitSecureBootInfo()
         {
-            if (_SecureBootInformation != null)
-                return;
-
+            // Allocating structure
             log.Info("Getting SecureBoot information");
-            _SecureBootInformation = null;
-
-            // trying to obtain that data
             IntPtr StructPtr = IntPtr.Zero;
+
             try
             {
-                // Initilazing structure pointer
+                // Executing NtQuery
                 int StructSize = Marshal.SizeOf<NativeMethods.SYSTEM_SECUREBOOT_INFORMATION>();
                 StructPtr = Marshal.AllocHGlobal(StructSize);
-
-                // Executing NtQuery
                 NativeMethods.NtQuerySystemInformation(0x91, StructPtr, (uint)StructSize, out _);
+
+                // Error check
                 int lastError = Marshal.GetLastWin32Error();
                 if (lastError != 0)
                 {
@@ -70,21 +65,13 @@ namespace rEFInd_Automenu.Booting
                     throw new Win32Exception(lastError, "Failed to obtain SecureBoot information");
                 }
 
-                // Data unpacking
+                // Formatting data
                 _SecureBootInformation = (NativeMethods.SYSTEM_SECUREBOOT_INFORMATION?)Marshal.PtrToStructure(
-                    StructPtr,
-                    typeof(NativeMethods.SYSTEM_SECUREBOOT_INFORMATION));
+                    StructPtr, typeof(NativeMethods.SYSTEM_SECUREBOOT_INFORMATION));
 
                 // Alright
                 log.InfoFormat("{0} was obtained successfully", nameof(NativeMethods.SYSTEM_SECUREBOOT_INFORMATION));
                 log.InfoFormat("SecureBoot IsCapable - {0}, IsEnabled - {1}", _SecureBootInformation.Value.SecureBootCapable, _SecureBootInformation.Value.SecureBootEnabled);
-            }
-            catch (Exception exc) when (exc is not Win32Exception)
-            {
-                // Some of data manipulation error
-                log.Error("Failed to obtain SecureBoot information because of exception", exc);
-                _SecureBootInformation = null;
-                throw new Win32Exception(Marshal.GetLastWin32Error());
             }
             finally
             {
@@ -95,7 +82,7 @@ namespace rEFInd_Automenu.Booting
 
         private static class NativeMethods
         {
-            [DllImport("ntdll.dll", PreserveSig = false)]
+            [DllImport("ntdll.dll", SetLastError = true, PreserveSig = false)]
             public static extern void NtQuerySystemInformation(uint SystemInformationClass, IntPtr SystemInformation, uint SystemInformationLength, out uint ReturnLength);
 
             [StructLayout(LayoutKind.Sequential)]

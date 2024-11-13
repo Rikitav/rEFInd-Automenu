@@ -17,27 +17,15 @@ namespace rEFInd_Automenu.Booting
     {
         private static readonly ILog log = LogManager.GetLogger(typeof(ArchitectureInfo));
 
-        public static FirmwareExecutableArchitecture Current
+        public static readonly FirmwareExecutableArchitecture Current = RuntimeInformation.OSArchitecture switch
         {
-            get => RuntimeInformation.OSArchitecture switch
-            {
-                Architecture.X86 => FirmwareExecutableArchitecture.X86,
-                Architecture.X64 => FirmwareExecutableArchitecture.AMD64,
-                Architecture.Arm64 => FirmwareExecutableArchitecture.ARM64,
-                _ => FirmwareExecutableArchitecture.None
-            };
-        }
+            Architecture.X86 => FirmwareExecutableArchitecture.X86,
+            Architecture.X64 => FirmwareExecutableArchitecture.AMD64,
+            Architecture.Arm64 => FirmwareExecutableArchitecture.ARM64,
+            _ => FirmwareExecutableArchitecture.None
+        };
 
-        public static string CurrentPostfix
-        {
-            get => Current switch
-            {
-                FirmwareExecutableArchitecture.ARM64 => "aa64",
-                FirmwareExecutableArchitecture.AMD64 => "x64",
-                FirmwareExecutableArchitecture.X86 => "ia32",
-                _ => string.Empty
-            };
-        }
+        public static readonly string CurrentPostfix = GetArchPostfixString(Current);
 
         /// <summary>
         /// Defines the processor architecture of current device
