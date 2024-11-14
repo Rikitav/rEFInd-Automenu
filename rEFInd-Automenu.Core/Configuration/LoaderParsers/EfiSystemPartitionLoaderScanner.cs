@@ -33,6 +33,7 @@ namespace rEFInd_Automenu.Configuration.LoaderParsers
 
         public IEnumerable<MenuEntryInfo> Parse(FirmwareExecutableArchitecture Arch)
         {
+            // Enumerating directories on Efi system partition
             log.Info("Started ESP loaders parsing");
             foreach (DirectoryInfo loaderDir in ESPLS_Helper.GetEspDirectories(EspFinder.EspDirectory))
             {
