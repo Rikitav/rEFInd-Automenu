@@ -55,7 +55,7 @@ namespace rEFInd_Automenu.Win32
             return true;
         }
 
-        public static void CheckProcessDuplication()
+        public static bool CheckProcessDuplication()
         {
             Process MyProcess = Process.GetCurrentProcess();
             foreach (Process OtherProcess in Process.GetProcessesByName(MyProcess.ProcessName))
@@ -63,9 +63,12 @@ namespace rEFInd_Automenu.Win32
                 if (OtherProcess.Id != MyProcess.Id)
                 {
                     log.FatalFormat("Another instance of rEFInd Automenu is running (PID : {0})", OtherProcess.Id);
-                    Environment.Exit(0x235); // ERROR_TOO_MANY_THREADS
+                    //Environment.Exit(0x235); // ERROR_TOO_MANY_THREADS
+                    return true;
                 }
             }
+
+            return false;
         }
 
         private static class NativeMethods

@@ -8,11 +8,6 @@ namespace rEFInd_Automenu.Win32
 {
     public class Win32ApplicationBridge : IDisposable
     {
-        /*
-        public static readonly Win32ApplicationBridge MountVol = new Win32ApplicationBridge("mountvol.exe");
-        public static readonly Win32ApplicationBridge BcdEdit = new Win32ApplicationBridge("bcdedit.exe");
-        */
-
         private bool _IsDisposed;
         private readonly string _ApplicationName;
         private readonly Process _ApplicationProcess;

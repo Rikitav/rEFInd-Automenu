@@ -32,6 +32,7 @@ use 'refind <command> --help' for more details about the command.
 * Installing the theme : `refind instance --installtheme <theme_directory_path>` or during installation `refind install --computer --theme <theme_directory_path>`
 * Removing rEFInd : `refind instance --remove`
 * Tweaking config : `refind config --set timeout --value 30`
+* Creating menuentry : `refind menuentry --create "Arch linux" --Volume "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX" --Loader "/vmlinuz-linux" --InitRD "/initramfs-linux.img" --Options "root=/dev/sda3 ro"`
 
 ### Requirements and building
 * `Windows 10 or later` is recommended for use (but versions up to 7 are supported)
