@@ -1,9 +1,0 @@
-{
-  "profiles": {
-    "rEFInd-Automenu.ConsoleApplication": {
-      "commandName": "Project",
-      "commandLineArgs": "obtain -d latest",
-      "remoteDebugEnabled": false
-    }
-  }
-}
